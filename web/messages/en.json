@@ -126,7 +126,13 @@
     "requestPhoto": "Request photo access",
     "notProvided": "Not provided",
     "report": "Report",
-    "astroDisclaimer": "This is computed for information only. Show it to your astrologer before deciding."
+    "astroDisclaimer": "This is computed for information only. Show it to your astrologer before deciding.",
+    "interestSentToast": "Interest sent 🙏",
+    "photoRequested": "Request sent",
+    "reported": "Report submitted",
+    "reportReason": "What's the problem?",
+    "needOwnProfile": "Add your own biodata first, then you can send interests.",
+    "actionFailed": "That didn't work. Please try again."
   },
   "match": {
     "guna": "Guna milan",
@@ -170,7 +176,17 @@
     "accept": "Accept",
     "decline": "Decline",
     "empty": "No interests yet",
-    "emptyHint": "Browse profiles and send an interest — they'll show up here."
+    "emptyHint": "Browse profiles and send an interest — they'll show up here.",
+    "from": "from",
+    "to": "to",
+    "statusSent": "Sent",
+    "statusAccepted": "Accepted",
+    "statusDeclined": "Declined",
+    "statusWithdrawn": "Withdrawn",
+    "withdraw": "Withdraw",
+    "contactUnlocked": "Phone number is now visible",
+    "noReceived": "Nobody has sent you an interest yet",
+    "noSent": "You haven't sent any interests yet"
   },
   "mine": {
     "title": "My profiles",
@@ -281,7 +297,16 @@
     "edit": "Edit",
     "consentListing": "I consent to this biodata being listed for the samaj.",
     "consentCandidate": "The person this biodata is about has agreed to this.",
-    "consentRequired": "Please tick both boxes to continue."
+    "consentRequired": "Please tick both boxes to continue.",
+    "submitting": "Submitting…",
+    "errNotActive": "Your account isn't approved yet. Please contact a samaj admin.",
+    "errNotAllowed": "You don't have permission to do that.",
+    "errDuplicate": "This biodata has already been submitted.",
+    "errMosal": "Mosal is required.",
+    "errConsent": "Please tick both consent boxes.",
+    "errDemo": "This is a demo — nothing is saved yet.",
+    "errUnknown": "Couldn't save that. Please try again.",
+    "yourRef": "Your reference: {ref}"
   },
   "auth": {
     "loginTitle": "Log in",

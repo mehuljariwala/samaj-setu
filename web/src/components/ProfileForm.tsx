@@ -6,13 +6,16 @@ import {
   Check,
   CheckCircle2,
   Info,
+  Loader2,
   Plus,
   Sparkles,
+  TriangleAlert,
   X,
 } from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from '@/i18n/navigation'
+import { submitProfile } from '@/lib/actions'
 import {
   CheckboxField,
   ChipChoice,
@@ -58,10 +61,12 @@ export function ProfileForm({
   initial,
   prefilled,
   taxonomies,
+  importJobId,
 }: {
   initial?: ProfileFormData
   prefilled?: string[]
   taxonomies: FormTaxonomies
+  importJobId?: string
 }) {
   const t = useTranslations('form')
   const tp = useTranslations('profile')
@@ -73,6 +78,9 @@ export function ProfileForm({
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<FormErrors>({})
   const [done, setDone] = useState(false)
+  const [publicRef, setPublicRef] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const topRef = useRef<HTMLDivElement>(null)
 
   const prefilledSet = new Set(prefilled ?? [])
@@ -98,7 +106,20 @@ export function ProfileForm({
 
   const errMsg = { required: t('errorRequired'), consent: t('consentRequired') }
 
-  function goNext() {
+  /** Server errors come back as keys so they can be phrased in Gujarati. */
+  function submitErrorMessage(key: string): string {
+    switch (key) {
+      case 'demo_mode': return t('errDemo')
+      case 'not_active': return t('errNotActive')
+      case 'not_allowed': return t('errNotAllowed')
+      case 'duplicate': return t('errDuplicate')
+      case 'mosal_required': return t('errMosal')
+      case 'consent_required': return t('errConsent')
+      default: return t('errUnknown')
+    }
+  }
+
+  async function goNext() {
     const found = validateStep(step, data, errMsg)
     if (Object.keys(found).length) {
       setErrors(found)
@@ -109,11 +130,27 @@ export function ProfileForm({
       return
     }
     setErrors({})
+
     if (step === STEP_COUNT) {
+      setSubmitting(true)
+      setSubmitError(null)
+
+      const res = await submitProfile(data, importJobId)
+      setSubmitting(false)
+
+      if (!res.ok) {
+        // The draft is deliberately NOT cleared on failure — twenty answers
+        // must survive a network blip.
+        setSubmitError(submitErrorMessage(res.error))
+        return
+      }
+
       clearDraft()
+      setPublicRef(res.data.publicRef)
       setDone(true)
       return
     }
+
     setStep((s) => s + 1)
     topRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }
@@ -579,11 +616,25 @@ export function ProfileForm({
               <ArrowLeft size={20} aria-hidden />
             </button>
           )}
-          <button type="button" onClick={goNext} className="btn btn-primary flex-1">
-            {step === STEP_COUNT ? t('submit') : t('next')}
-            {step < STEP_COUNT && <ArrowRight size={20} aria-hidden />}
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={submitting}
+            className="btn btn-primary flex-1"
+          >
+            {submitting && <Loader2 size={20} aria-hidden className="animate-spin" />}
+            {submitting ? t('submitting') : step === STEP_COUNT ? t('submit') : t('next')}
+            {!submitting && step < STEP_COUNT && <ArrowRight size={20} aria-hidden />}
           </button>
         </div>
+
+        {submitError && (
+          <p role="alert" className="mt-2 flex items-start gap-1.5 text-sm font-medium text-danger">
+            <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
+            {submitError}
+          </p>
+        )}
+
         <p className="mt-1.5 text-center text-xs text-fg-subtle">{t('draftSaved')}</p>
       </div>
     </div>

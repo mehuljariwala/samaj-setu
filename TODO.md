@@ -46,18 +46,37 @@ Legend: **P0** blocks anything real · **P1** blocks public launch · **P2** aft
       preferences stay private · moderators see the review queue
 - [ ] Re-run in CI on every migration
 
-### 3. Build the write path — the largest remaining chunk
-There are currently **zero** database writes in the codebase. `grep '\.insert('` returns nothing.
+### 3. Write path — ✅ MOSTLY DONE 2026-09-06 · 13 write call sites (was 0)
+- [x] `app.submit_profile()` — six tables in one transaction, status
+      `pending_review`, consents recorded, audit logged, mosal surname derived
+- [x] `import_jobs` persistence (`recordImport`)
+- [x] Send interest (`app.send_interest`, auto-picks your only profile)
+- [x] Accept / decline / withdraw — guard trigger enforces who may do which
+- [x] Shortlist (new `shortlists` table, optimistic toggle)
+- [x] Request photo access (new `photo_requests` table) + grant on approval
+- [x] Report a profile
+- [x] `setProfileStatus` — pause / resume / married / withdraw
+- [x] Verified end to end over HTTP with two real JWTs:
+      submit → invisible → approved → visible → interest → contacts locked →
+      **sender self-accept rejected 42501** → recipient accepts → contacts unlock
+- [ ] `/interests` UI — actions exist, the page is still an empty state
+- [ ] `/me` UI — actions exist, the page is still an empty state
+- [ ] Share biodata card (still inert; needs the card generator, P2)
 
-- [ ] Profile submit. `ProfileForm.goNext()` at `STEP_COUNT` calls `setDone(true)` and shows the celebration. Nothing is saved. Needs: insert `profiles` + `profile_family` + `profile_contacts` + `profile_astro` + `profile_managers` + `consents`, in one transaction, status `pending_review`.
-- [ ] `import_jobs` — persist the raw paste (the parser's future training corpus)
-- [ ] Send interest (`profile/[ref]` primary CTA)
-- [ ] Accept / decline interest (`/interests` is an empty state only)
-- [ ] Shortlist heart (`ProfileCardItem`)
-- [ ] Request photo access → `photo_access_grants`
-- [ ] Report a profile → `reports`
-- [ ] Share biodata card (2 buttons, both inert)
-- [ ] `/me` — list, edit, pause, withdraw your own profiles
+### 3b. More escalation fixes — ✅ 2026-09-06 (found while writing item 3)
+- [x] **The sender could accept their own interest**, unlocking the other
+      family's phone number unilaterally. Guard trigger: only the recipient
+      may accept/decline, only the sender may withdraw.
+- [x] **The first `profile_managers` row could never be inserted** — the policy
+      required `manages_profile()`, which is false until a manager exists.
+      Nobody could have created a profile at all. Split into insert/update/
+      delete policies with an unclaimed-profile case.
+- [x] **Members could never be deleted** — seven FKs onto `app_users` were
+      `NO ACTION`, blocking the DPDP deletion-on-request duty. Now `set null`,
+      so audit trails and moderation records survive erasure without the link.
+- [x] Fixed a test-harness leak: `reset role` does not clear
+      `request.jwt.claims`, so fixture setup was still running as the last
+      test actor. Suite remains **20/20**.
 
 ### 4. Real authentication — ✅ CODE DONE 2026-09-06 · needs one dashboard toggle
 - [x] `lib/auth.ts` rewritten onto Supabase Auth `signInWithOtp` / `verifyOtp`

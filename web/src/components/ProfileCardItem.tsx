@@ -1,6 +1,7 @@
-import { BadgeCheck, GraduationCap, Heart, Lock, MapPin, Users } from 'lucide-react'
+import { BadgeCheck, GraduationCap, Lock, MapPin, Users } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { Portrait } from './art/Portrait'
+import { ShortlistButton } from './ShortlistButton'
 import { Link } from '@/i18n/navigation'
 import {
   displayName,
@@ -114,13 +115,7 @@ export async function ProfileCardItem({
             >
               <span className="truncate">{tc('viewProfile')}</span>
             </Link>
-            <button
-              type="button"
-              aria-label={tc('shortlist')}
-              className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border-strong text-fg-muted transition-colors duration-150 hover:bg-surface-2 hover:text-primary sm:size-11"
-            >
-              <Heart size={17} aria-hidden />
-            </button>
+            <ShortlistButton profileId={profile.id} />
           </div>
         </div>
       </article>

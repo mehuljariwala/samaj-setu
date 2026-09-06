@@ -1,7 +1,8 @@
-import { Heart, Info, Lock, Share2, Flag, TriangleAlert } from 'lucide-react'
+import { Info, Lock, TriangleAlert } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { Portrait } from '@/components/art/Portrait'
+import { ProfileActions, ReportButton } from '@/components/ProfileActions'
 import { TopBar } from '@/components/TopBar'
 import { getProfileByRef } from '@/lib/data'
 import {
@@ -107,24 +108,13 @@ export default async function ProfilePage({
           </div>
         </section>
 
-        {!profile.photoUnlocked && (
-          <button type="button" className="btn btn-secondary mt-3 w-full">
-            <Lock size={18} aria-hidden />
-            {t('requestPhoto')}
-          </button>
-        )}
-
         {/* On desktop the primary action lives in the rail; the fixed mobile
             bar below is hidden there so it doesn't float over a wide page. */}
-        <div className="mt-3 hidden gap-3 lg:flex">
-          <button type="button" className="btn btn-secondary !px-4" aria-label={t('shareCard')}>
-            <Share2 size={20} aria-hidden />
-          </button>
-          <button type="button" className="btn btn-primary flex-1">
-            <Heart size={20} aria-hidden />
-            {t('sendInterest')}
-          </button>
-        </div>
+        <ProfileActions
+          profileId={profile.id}
+          showPhotoRequest={!profile.photoUnlocked}
+          variant="rail"
+        />
         </div>
 
         <div className="min-w-0">
@@ -182,27 +172,15 @@ export default async function ProfilePage({
           </div>
         </Section>
 
-        <button
-          type="button"
-          className="mt-6 flex w-full min-h-12 items-center justify-center gap-2 text-sm font-medium text-fg-subtle"
-        >
-          <Flag size={16} aria-hidden />
-          {t('report')}
-        </button>
+        <ReportButton profileId={profile.id} />
         </div>
         </div>
       </main>
 
       {/* One primary action per screen. Share is secondary and icon-plus-label. */}
       <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-lg gap-3 px-4 py-3">
-          <button type="button" className="btn btn-secondary !px-4" aria-label={t('shareCard')}>
-            <Share2 size={20} aria-hidden />
-          </button>
-          <button type="button" className="btn btn-primary flex-1">
-            <Heart size={20} aria-hidden />
-            {t('sendInterest')}
-          </button>
+        <div className="mx-auto max-w-lg px-4 py-3">
+          <ProfileActions profileId={profile.id} />
         </div>
       </div>
     </>

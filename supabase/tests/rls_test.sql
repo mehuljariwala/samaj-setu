@@ -10,6 +10,11 @@
 -- Role switching is done with plain `set local role` / `reset role` rather
 -- than helper functions: once you are `authenticated` you have no USAGE on a
 -- private schema, and you cannot SET ROLE back to postgres. RESET ROLE can.
+--
+-- Every `reset role` is paired with clearing request.jwt.claims. RESET ROLE
+-- restores the database role but leaves the claim behind, so auth.uid() would
+-- still resolve to the last actor and the guard triggers would fire on
+-- fixture setup that is meant to run as superuser.
 
 begin;
 
@@ -80,6 +85,7 @@ select is_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 set local role authenticated;
 select set_config('request.jwt.claims',
   json_build_object('sub', :'carol', 'role', 'authenticated')::text, true);
@@ -89,6 +95,7 @@ select is_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 update app_users set status = 'active' where id = :'carol';
 
 set local role authenticated;
@@ -126,6 +133,7 @@ select isnt_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 insert into interests (from_profile_id, to_profile_id, initiated_by_user_id, status)
 values (:'p_bob', :'p_alice', :'bob', 'sent');
 
@@ -138,6 +146,7 @@ select is_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 update interests set status = 'accepted', responded_at = now()
 where from_profile_id = :'p_bob' and to_profile_id = :'p_alice';
 
@@ -173,6 +182,7 @@ select is_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 insert into photo_access_grants (profile_id, granted_to_user_id, granted_by_user_id)
 values (:'p_alice', :'carol', :'alice');
 
@@ -185,6 +195,7 @@ select isnt_empty(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 update photo_access_grants set revoked_at = now()
 where profile_id = :'p_alice' and granted_to_user_id = :'carol';
 
@@ -248,6 +259,7 @@ select throws_ok(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 set local role authenticated;
 select set_config('request.jwt.claims',
   json_build_object('sub', :'alice', 'role', 'authenticated')::text, true);
@@ -258,6 +270,7 @@ select lives_ok(
 );
 
 reset role;
+select set_config('request.jwt.claims', '', true);
 select * from finish();
 
 rollback;
