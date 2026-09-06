@@ -1,0 +1,23 @@
+project_id = "samaj-setu"
+
+[db]
+port = 54322
+major_version = 17
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://localhost:3000"
+enable_signup = true
+
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+# Local dev sends zero real SMS: these numbers always accept the fixed code.
+test_otp = { 919999900001 = "123456", 919999900002 = "123456" }

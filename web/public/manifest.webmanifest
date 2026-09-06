@@ -1,0 +1,11 @@
+{
+  "name": "સમાજ સેતુ · Samaj Setu",
+  "short_name": "સમાજ સેતુ",
+  "start_url": "/gu",
+  "display": "standalone",
+  "background_color": "#fffbf5",
+  "theme_color": "#9b1c31",
+  "lang": "gu",
+  "dir": "ltr",
+  "icons": []
+}
