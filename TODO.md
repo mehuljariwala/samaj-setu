@@ -20,18 +20,31 @@ Legend: **P0** blocks anything real · **P1** blocks public launch · **P2** aft
 
 ## P0 — nothing works without these
 
-### 1. Stand up the database
-- [ ] Create Supabase project; `supabase link`
-- [ ] `supabase db push` — the three migrations have **never been applied anywhere**
-- [ ] Verify the taxonomy seed landed (sub-communities, sects, diet, education, occupation)
-- [ ] `web/.env.local` with URL + anon key. Until this exists the app serves 8 hardcoded fixtures.
-- [ ] Generate types: `supabase gen types typescript`
+> **Current blocker:** the database is live and correct, and that is exactly
+> why the app now shows nothing. Every policy requires an authenticated
+> `app_users` row, so the anon key reads zero profiles, zero contacts, even
+> zero taxonomy. Real auth (item 4) is now the single gate on everything else.
 
-### 2. Run the RLS suite — do this before anything else ships
-- [ ] Install Docker + Supabase CLI
-- [ ] `supabase test db` against `supabase/tests/rls_test.sql` (16 assertions)
-- [ ] Fix whatever fails
-- **Until this passes, "nobody sees your daughter's number without permission" is an unverified claim, and it is the entire product promise.**
+### 1. Stand up the database — ✅ DONE 2026-09-06
+- [x] Supabase project `fpdzrogmnnvibqsimlxp`
+- [x] All three migrations applied — 22 tables, RLS on 22/22, 37 policies
+- [x] Taxonomy seeded (4 sub-communities, 2 sects, 4 diets, 6 education, 5 occupation)
+- [x] Reference data: 27 nakshatras, 12 rashis
+- [x] 15 `app.*` helper functions + `v_profile_card`
+- [x] `web/.env.local` written (gitignored)
+- [x] 8 demo profiles seeded — `supabase/seed/demo_profiles.sql`
+- [ ] Generate types: `supabase gen types typescript`
+- [ ] **Rotate the service_role key and secret key** — both were pasted into a chat transcript
+
+### 2. Run the RLS suite — ✅ DONE 2026-09-06, 16/16 pass
+- [x] Ran via `psql -f supabase/tests/rls_test.sql` against the live database
+- [x] Fixed two harness bugs: `authenticated` has no USAGE on a private schema,
+      and cannot `SET ROLE postgres` back. Now uses `set local role` / `reset role`.
+- [x] Verified: anon sees nothing · unverified members cannot browse · sent
+      interest does NOT unlock a number · accepted interest unlocks both ways ·
+      an uninvolved third party stays locked out · photo grants revoke instantly ·
+      preferences stay private · moderators see the review queue
+- [ ] Re-run in CI on every migration
 
 ### 3. Build the write path — the largest remaining chunk
 There are currently **zero** database writes in the codebase. `grep '\.insert('` returns nothing.
