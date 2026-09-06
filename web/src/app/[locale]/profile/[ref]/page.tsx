@@ -60,8 +60,14 @@ export default async function ProfilePage({
         back={{ href: '/browse', label: tCommon('back') }}
       />
 
-      <main id="main" className="px-4 pt-4" style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}>
-        <section className="card flex gap-4 p-4">
+      <main
+        id="main"
+        className="container-app pt-4 lg:pb-12"
+        style={{ paddingBottom: 'calc(92px + env(safe-area-inset-bottom))' }}
+      >
+        <div className="lg:grid lg:grid-cols-[22rem_1fr] lg:items-start lg:gap-6">
+        <div className="lg:sticky lg:top-24">
+        <section className="card flex gap-4 p-4 lg:flex-col lg:items-start">
           <div className="size-24 shrink-0 overflow-hidden rounded-2xl bg-surface-2">
             {profile.photoUnlocked && profile.photoKey ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -101,15 +107,26 @@ export default async function ProfilePage({
         </section>
 
         {!profile.photoUnlocked && (
-          <button
-            type="button"
-            className="btn btn-secondary mt-3 w-full"
-          >
+          <button type="button" className="btn btn-secondary mt-3 w-full">
             <Lock size={18} aria-hidden />
             {t('requestPhoto')}
           </button>
         )}
 
+        {/* On desktop the primary action lives in the rail; the fixed mobile
+            bar below is hidden there so it doesn't float over a wide page. */}
+        <div className="mt-3 hidden gap-3 lg:flex">
+          <button type="button" className="btn btn-secondary !px-4" aria-label={t('shareCard')}>
+            <Share2 size={20} aria-hidden />
+          </button>
+          <button type="button" className="btn btn-primary flex-1">
+            <Heart size={20} aria-hidden />
+            {t('sendInterest')}
+          </button>
+        </div>
+        </div>
+
+        <div className="min-w-0">
         <Section title={t('personal')}>
           <Row label={t('dob')} value={profile.dob ? localeDigits(formatDate(profile.dob), locale) : null} t={t} />
           <Row label={t('birthTime')} value={profile.birthTime ? localeDigits(profile.birthTime, locale) : null} t={t} />
@@ -171,10 +188,12 @@ export default async function ProfilePage({
           <Flag size={16} aria-hidden />
           {t('report')}
         </button>
+        </div>
+        </div>
       </main>
 
       {/* One primary action per screen. Share is secondary and icon-plus-label. */}
-      <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur">
+      <div className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-lg gap-3 px-4 py-3">
           <button type="button" className="btn btn-secondary !px-4" aria-label={t('shareCard')}>
             <Share2 size={20} aria-hidden />

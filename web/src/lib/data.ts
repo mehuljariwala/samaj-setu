@@ -134,10 +134,34 @@ const FIXTURE_TAXONOMY: Record<string, { code: string; gu: string; en: string }[
     { code: 'bhagat', gu: 'ભગત', en: 'Bhagat' },
     { code: 'jagat', gu: 'જગત', en: 'Jagat' },
   ],
+  diet: [
+    { code: 'veg', gu: 'શાકાહારી', en: 'Vegetarian' },
+    { code: 'jain', gu: 'જૈન', en: 'Jain' },
+    { code: 'eggetarian', gu: 'ઈંડા સહિત', en: 'Eggetarian' },
+    { code: 'nonveg', gu: 'માંસાહારી', en: 'Non-vegetarian' },
+  ],
+  education_level: [
+    { code: 'below_12', gu: '૧૨ ધોરણથી ઓછું', en: 'Below 12th' },
+    { code: 'hsc', gu: '૧૨ પાસ', en: '12th Pass' },
+    { code: 'diploma', gu: 'ડિપ્લોમા', en: 'Diploma' },
+    { code: 'graduate', gu: 'સ્નાતક', en: 'Graduate' },
+    { code: 'post_graduate', gu: 'અનુસ્નાતક', en: 'Post Graduate' },
+    { code: 'professional', gu: 'પ્રોફેશનલ (CA/MBBS/LLB)', en: 'Professional (CA/MBBS/LLB)' },
+  ],
+  occupation_type: [
+    { code: 'job', gu: 'નોકરી', en: 'Job' },
+    { code: 'business', gu: 'ધંધો', en: 'Business' },
+    { code: 'professional', gu: 'પ્રોફેશનલ', en: 'Professional' },
+    { code: 'student', gu: 'અભ્યાસ કરે છે', en: 'Student' },
+    { code: 'not_working', gu: 'કામ કરતા નથી', en: 'Not working' },
+  ],
 }
 
+export type TaxonomyKind =
+  | 'sub_community' | 'sect' | 'diet' | 'education_level' | 'occupation_type'
+
 export async function getTaxonomy(
-  kind: 'sub_community' | 'sect',
+  kind: TaxonomyKind,
   locale: string,
 ): Promise<{ code: string; label: string }[]> {
   if (usingFixtures) {

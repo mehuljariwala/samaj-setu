@@ -2,43 +2,50 @@
 
 /* ---------------------------------------------------------------- tokens
  *
- * Palette is warm cream + kumkum red + marigold — the colours a Gujarati
- * family reads as auspicious and trustworthy. Deliberately not the generic
- * SaaS purple: the audience is parents aged 45-65, not startup users.
+ * Deep teal + restrained marigold on a near-white warm neutral.
  *
- * Every foreground/background pair below clears WCAG AA (4.5:1); body text
- * pairs clear 7:1, because the primary audience is presbyopic and reading
- * Gujarati script on a mid-range Android screen in daylight.
+ * Why not the category-standard pink/red: every matrimonial product leans
+ * "romance" because they sell courtship. This one is a decision tool used by
+ * a parent, so the register is calm and institutional-but-warm. Teal-and-gold
+ * is also a classic Gujarati pairing (peacock, bandhani, temple work), so it
+ * reads as culturally at home without being wedding-invitation kitsch.
+ *
+ * RED IS RESERVED FOR ERRORS. It is not a brand colour. Using it for buttons,
+ * counts, links and soft fills at once is what made the first pass shout.
+ *
+ * Light theme only — no dark variant. Every pair below was checked with a
+ * contrast script, not by eye: body text clears 7:1, all functional pairs
+ * clear WCAG AA at 4.5:1.
  */
 @theme {
-  --color-bg:            #fffbf5;
+  --color-bg:            #fafaf8;
   --color-surface:       #ffffff;
-  --color-surface-2:     #fbf4e9;
-  --color-fg:            #1f1611;  /* 16.1:1 on bg */
-  --color-fg-muted:      #6b5b4e;  /*  6.0:1 on bg */
-  --color-fg-subtle:     #8a7869;
+  --color-surface-2:     #f3f2ee;
+  --color-fg:            #1a1917;  /* 16.8:1 on bg */
+  --color-fg-muted:      #5c5952;  /*  6.7:1 on bg */
+  --color-fg-subtle:     #87837b;  /*  3.6:1 — decorative/meta only */
 
-  --color-primary:       #9b1c31;  /* white on it: 8.2:1 */
-  --color-primary-hover: #7d1627;
-  --color-primary-soft:  #fdeaee;
+  --color-primary:       #0e5a56;  /* white on it: 8.0:1 */
+  --color-primary-hover: #0a4744;
+  --color-primary-soft:  #e4f0ef;
   --color-on-primary:    #ffffff;
 
-  --color-accent:        #b35309;  /* white on it: 4.9:1 */
-  --color-accent-soft:   #fdf0dc;
+  --color-accent:        #8a5a08;  /* on accent-soft: 5.3:1 */
+  --color-accent-soft:   #fbf1de;
 
-  --color-success:       #166534;
-  --color-success-soft:  #dcfce7;
-  --color-warning:       #92400e;
-  --color-warning-soft:  #fef3c7;
-  --color-danger:        #b3261e;
-  --color-danger-soft:   #fdecea;
+  --color-success:       #186a3b;
+  --color-success-soft:  #e3f3e8;
+  --color-warning:       #8a4b08;
+  --color-warning-soft:  #fcf0dc;
+  --color-danger:        #a8231c;
+  --color-danger-soft:   #fcebe9;
 
-  --color-border:        #e8dccb;
-  --color-border-strong: #d3c2ab;
-  --color-ring:          #9b1c31;
+  --color-border:        #e4e2db;
+  --color-border-strong: #c9c5ba;
+  --color-ring:          #0e5a56;
 
-  /* Type scale, shifted one step up from the usual web scale.
-   * Body is 17px, not 16px — see rationale above. */
+  /* Type scale, one step up from the usual web scale. Body is 17px, not 16:
+   * the primary audience is 45-65 and presbyopic. */
   --text-xs:   0.8125rem; /* 13 */
   --text-sm:   0.9375rem; /* 15 */
   --text-base: 1.0625rem; /* 17 */
@@ -46,55 +53,33 @@
   --text-xl:   1.375rem;  /* 22 */
   --text-2xl:  1.625rem;  /* 26 */
   --text-3xl:  2rem;      /* 32 */
+  --text-4xl:  2.5rem;    /* 40 — desktop hero only */
 
-  /* Gujarati stacks matras above and below the baseline; anything under 1.7
-   * clips them and turns મૈં into મં at a glance. */
+  /* Gujarati stacks matras above and below the baseline; under 1.7 they clip
+   * and મૈં reads as મં at a glance. */
   --leading-normal: 1.7;
   --leading-relaxed: 1.8;
 
-  --radius-card: 1rem;
+  --radius-card: 0.875rem;
   --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgb(31 22 17 / 0.05), 0 2px 8px rgb(31 22 17 / 0.04);
-  --shadow-sheet: 0 -4px 24px rgb(31 22 17 / 0.14);
+  /* Lighter than the first pass — heavy shadows on a near-white background
+   * read as grubby rather than elevated. */
+  --shadow-card: 0 1px 2px rgb(26 25 23 / 0.04), 0 1px 3px rgb(26 25 23 / 0.03);
+  --shadow-card-hover: 0 2px 4px rgb(26 25 23 / 0.05), 0 8px 20px rgb(26 25 23 / 0.06);
+  --shadow-sheet: 0 -4px 24px rgb(26 25 23 / 0.12);
 
-  /* One rhythm for all motion. */
   --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-bg:            #16110d;
-    --color-surface:       #211a14;
-    --color-surface-2:     #2a211a;
-    --color-fg:            #f5ede3;
-    --color-fg-muted:      #b7a695;
-    --color-fg-subtle:     #8f7f70;
-
-    --color-primary:       #c13a52;  /* white on it: 5.2:1 */
-    --color-primary-hover: #d1495f;
-    --color-primary-soft:  #3a1a21;
-    --color-on-primary:    #ffffff;
-
-    --color-accent:        #d9832f;
-    --color-accent-soft:   #33240f;
-
-    --color-success:       #86efac;
-    --color-success-soft:  #14301f;
-    --color-warning:       #fcd34d;
-    --color-warning-soft:  #33260a;
-    --color-danger:        #f4867d;
-    --color-danger-soft:   #341613;
-
-    --color-border:        #3a2e24;
-    --color-border-strong: #52412f;
-  }
-}
 
 /* ------------------------------------------------------------------ base */
 
 @layer base {
   html {
+    /* Light only. Without this the OS dark preference still inverts native
+       controls (selects, date pickers, scrollbars) against our light surfaces. */
+    color-scheme: light;
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
   }
@@ -104,13 +89,10 @@
     color: var(--color-fg);
     font-size: var(--text-base);
     line-height: var(--leading-normal);
-    /* Kills the 300ms tap delay without disabling pinch-zoom. */
-    touch-action: manipulation;
+    touch-action: manipulation; /* kills tap delay without disabling zoom */
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Never remove the focus ring — half this audience will end up on a
-   * keyboard-equipped device or a screen reader at some point. */
   :focus-visible {
     outline: 3px solid var(--color-ring);
     outline-offset: 2px;
@@ -122,7 +104,6 @@
   h1, h2, h3 { line-height: 1.35; font-weight: 700; text-wrap: balance; }
   p { text-wrap: pretty; }
 
-  /* Digits in tables and stat rows shouldn't jitter as values change. */
   .tabular { font-variant-numeric: tabular-nums; }
 }
 
@@ -138,8 +119,28 @@
 /* ------------------------------------------------------------ components */
 
 @layer components {
-  /* 52px tall: comfortably above the 48dp Android minimum, sized for a
-   * 60-year-old thumb rather than a designer's cursor. */
+  /* One container, three widths. Phone stays a single readable column;
+   * desktop opens up rather than rendering a phone in the middle of a
+   * 27-inch monitor. */
+  .container-app {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 34rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px)  { .container-app { max-width: 46rem; padding-inline: 1.5rem; } }
+  @media (min-width: 1024px) { .container-app { max-width: 68rem; padding-inline: 2rem; } }
+
+  /* Narrow variant for reading/forms, where long measure hurts. */
+  .container-prose {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 34rem;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 768px) { .container-prose { max-width: 38rem; padding-inline: 1.5rem; } }
+
+  /* 52px: above the 48dp Android minimum, sized for a 60-year-old thumb. */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -151,12 +152,13 @@
     font-size: var(--text-base);
     font-weight: 600;
     line-height: 1.2;
+    cursor: pointer;
     transition: background-color 180ms var(--ease-out-soft),
+                border-color 180ms var(--ease-out-soft),
                 transform 120ms var(--ease-out-soft);
   }
-  /* Scale only — never a layout-affecting property. */
   .btn:active:not(:disabled) { transform: scale(0.97); }
-  .btn:disabled { opacity: 0.45; pointer-events: none; }
+  .btn:disabled { opacity: 0.45; pointer-events: none; cursor: not-allowed; }
 
   .btn-primary   { background: var(--color-primary); color: var(--color-on-primary); }
   .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
@@ -177,6 +179,14 @@
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
   }
+  /* Hover lift is pointer-only: on touch it just flashes during a scroll. */
+  @media (hover: hover) {
+    .card-interactive:hover {
+      box-shadow: var(--shadow-card-hover);
+      border-color: var(--color-border-strong);
+    }
+  }
+  .card-interactive { transition: box-shadow 180ms var(--ease-out-soft), border-color 180ms var(--ease-out-soft); }
 
   .chip {
     display: inline-flex;
@@ -190,6 +200,7 @@
     color: var(--color-fg-muted);
     border: 1px solid var(--color-border);
   }
+  .chip-primary { background: var(--color-primary-soft); color: var(--color-primary); border-color: transparent; }
   .chip-success { background: var(--color-success-soft); color: var(--color-success); border-color: transparent; }
   .chip-accent  { background: var(--color-accent-soft);  color: var(--color-accent);  border-color: transparent; }
   .chip-warning { background: var(--color-warning-soft); color: var(--color-warning); border-color: transparent; }
@@ -210,28 +221,55 @@
     background: var(--color-surface);
     color: var(--color-fg);
     border: 1.5px solid var(--color-border-strong);
-    border-radius: 0.75rem;
+    border-radius: 0.625rem;
     transition: border-color 160ms var(--ease-out-soft);
   }
   .field-input:focus { border-color: var(--color-primary); }
   .field-input[aria-invalid='true'] { border-color: var(--color-danger); }
 
-  /* Content must clear the fixed bottom nav and the Android gesture bar. */
+  /* Clears the fixed bottom nav plus the Android gesture bar. The nav is
+   * mobile-only, so the reservation is too. */
   .pad-bottom-nav { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  @media (min-width: 1024px) { .pad-bottom-nav { padding-bottom: 3rem; } }
 }
 
 @layer utilities {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .safe-top    { padding-top: env(safe-area-inset-top); }
 
-  @keyframes sheet-up {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-  }
-  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
-  @keyframes rise    { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes sheet-up { from { transform: translateY(100%) } to { transform: translateY(0) } }
+  @keyframes fade-in  { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes rise     { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes pop      { 0% { opacity: 0; transform: scale(0.8) } 60% { transform: scale(1.06) } 100% { opacity: 1; transform: scale(1) } }
+  @keyframes slide-in-right { from { opacity: 0; transform: translateX(16px) } to { opacity: 1; transform: none } }
+  @keyframes slide-in-left  { from { opacity: 0; transform: translateX(-16px) } to { opacity: 1; transform: none } }
+  @keyframes shimmer  { from { background-position: -200% 0 } to { background-position: 200% 0 } }
+  /* Very slow, very low-amplitude: ambient warmth, not a distraction. */
+  @keyframes drift    { 0%,100% { transform: translate(0,0) scale(1) } 50% { transform: translate(3%,-4%) scale(1.08) } }
+  @keyframes fall     { 0% { opacity: 1; transform: translateY(-10px) rotate(0deg) } 100% { opacity: 0; transform: translateY(160px) rotate(320deg) } }
 
   .animate-sheet-up { animation: sheet-up 260ms var(--ease-out-soft); }
   .animate-fade-in  { animation: fade-in 180ms var(--ease-out-soft); }
   .animate-rise     { animation: rise 240ms var(--ease-out-soft) backwards; }
+  .animate-pop      { animation: pop 420ms var(--ease-out-soft) backwards; }
+  .animate-in-right { animation: slide-in-right 240ms var(--ease-out-soft) backwards; }
+  .animate-in-left  { animation: slide-in-left 240ms var(--ease-out-soft) backwards; }
+  .animate-drift    { animation: drift 18s ease-in-out infinite; }
+  .animate-fall     { animation: fall 1.4s var(--ease-out-soft) forwards; }
+
+  /* Stagger children without a per-item inline style. */
+  .stagger > * { animation: rise 260ms var(--ease-out-soft) backwards; }
+  .stagger > *:nth-child(1) { animation-delay: 0ms }
+  .stagger > *:nth-child(2) { animation-delay: 55ms }
+  .stagger > *:nth-child(3) { animation-delay: 110ms }
+  .stagger > *:nth-child(4) { animation-delay: 165ms }
+  .stagger > *:nth-child(5) { animation-delay: 220ms }
+  .stagger > *:nth-child(6) { animation-delay: 275ms }
+  .stagger > *:nth-child(n+7) { animation-delay: 320ms }
+
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-surface-2) 25%, var(--color-border) 50%, var(--color-surface-2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
 }

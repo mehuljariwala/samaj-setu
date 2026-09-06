@@ -23,12 +23,12 @@ export function BottomNav() {
 
   // Detail screens own the bottom of the viewport for their primary action.
   // Stacking a CTA bar above the nav would eat ~130px of a small phone.
-  if (pathname.startsWith('/profile/') || pathname.startsWith('/import')) return null
+  if (pathname.startsWith('/profile/') || pathname.startsWith('/add')) return null
 
   return (
     <nav
       aria-label={t('home')}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur safe-bottom"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur safe-bottom lg:hidden"
     >
       <ul className="mx-auto flex max-w-lg">
         {ITEMS.map(({ href, icon: Icon, key }) => {

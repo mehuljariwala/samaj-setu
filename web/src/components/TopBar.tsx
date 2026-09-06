@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { useTransition } from 'react'
 import { Link, usePathname, useRouter } from '@/i18n/navigation'
 import { routing } from '@/i18n/routing'
+import { AccountButton } from './AccountButton'
 import { cn } from '@/lib/cn'
 
 /**
@@ -69,7 +70,7 @@ export function TopBar({
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg/95 backdrop-blur safe-top">
-      <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-3">
+      <div className="container-app flex items-center gap-3 py-3">
         {back && (
           <Link
             href={back.href}
@@ -84,6 +85,7 @@ export function TopBar({
           {subtitle && <p className="truncate text-sm text-fg-muted">{subtitle}</p>}
         </div>
         <LanguageToggle />
+        <AccountButton />
       </div>
     </header>
   )

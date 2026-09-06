@@ -10,7 +10,7 @@ export default async function InterestsPage() {
   return (
     <>
       <TopBar title={t('title')} />
-      <main id="main" className="pad-bottom-nav px-4 pt-4">
+      <main id="main" className="container-app pad-bottom-nav pt-4">
         <div className="mt-12 flex flex-col items-center px-6 text-center">
           <HeartHandshake size={44} aria-hidden className="text-fg-subtle" />
           <p className="mt-4 text-lg font-semibold">{t('empty')}</p>

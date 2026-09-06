@@ -64,7 +64,7 @@ export default async function BrowsePage({
     <>
       <TopBar title={t('title')} />
 
-      <main id="main" className="pad-bottom-nav px-4 pt-4">
+      <main id="main" className="container-app pad-bottom-nav pt-4">
         <Suspense fallback={<div className="h-14 animate-pulse rounded-full bg-surface-2" />}>
           <BrowseControls
             resultCount={profiles.length}
@@ -81,7 +81,7 @@ export default async function BrowsePage({
             <p className="mt-1 text-sm text-fg-muted">{t('noResultsHint')}</p>
           </div>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {profiles.map((p, i) => (
               <ProfileCardItem key={p.id} profile={p} locale={locale} index={i} />
             ))}

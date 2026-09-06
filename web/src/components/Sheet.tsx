@@ -65,10 +65,10 @@ export function Sheet({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className="animate-sheet-up absolute inset-x-0 bottom-0 mx-auto flex max-h-[88dvh] max-w-lg flex-col rounded-t-3xl bg-surface shadow-(--shadow-sheet) outline-none"
+        className="animate-sheet-up absolute inset-x-0 bottom-0 mx-auto flex max-h-[88dvh] max-w-lg flex-col rounded-t-3xl bg-surface shadow-(--shadow-sheet) outline-none sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[80dvh] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl sm:animate-fade-in"
       >
         {/* Grab handle — the affordance that says "this can be dragged away". */}
-        <div className="flex justify-center pt-3" aria-hidden>
+        <div className="flex justify-center pt-3 sm:hidden" aria-hidden>
           <span className="h-1.5 w-10 rounded-full bg-border-strong" />
         </div>
 

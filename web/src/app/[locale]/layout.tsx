@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { BottomNav } from '@/components/BottomNav'
+import { SideNav } from '@/components/SideNav'
 import { routing } from '@/i18n/routing'
 import '../globals.css'
 
@@ -44,10 +45,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   // Never lock zoom — a presbyopic user pinching to read is the whole point.
   maximumScale: 5,
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#fffbf5' },
-    { media: '(prefers-color-scheme: dark)', color: '#16110d' },
-  ],
+  // Single value: the app is light-only, so offering a dark theme-color would
+  // tint the Android browser chrome against a light page.
+  themeColor: '#fafaf8',
 }
 
 export default async function LocaleLayout({
@@ -70,7 +70,10 @@ export default async function LocaleLayout({
           >
             Skip to content
           </a>
-          <div className="mx-auto max-w-lg">{children}</div>
+          <div className="lg:flex">
+            <SideNav />
+            <div className="min-w-0 flex-1">{children}</div>
+          </div>
           <BottomNav />
         </NextIntlClientProvider>
       </body>
