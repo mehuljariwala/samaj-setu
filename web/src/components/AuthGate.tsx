@@ -4,6 +4,7 @@ import { LogIn } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 import { Link } from '@/i18n/navigation'
+import { supabaseConfigured } from '@/lib/supabase/env'
 import { useSession } from '@/lib/useSession'
 
 /**
@@ -15,6 +16,10 @@ import { useSession } from '@/lib/useSession'
 export function AuthGate({ next, children }: { next: string; children: ReactNode }) {
   const { session, loading } = useSession()
   const t = useTranslations('auth')
+
+  // No Supabase means fixtures/demo mode: there is no auth to gate on, and
+  // showing an unreachable login prompt would just dead-end the visitor.
+  if (!supabaseConfigured) return <>{children}</>
 
   if (loading) {
     return (

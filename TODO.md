@@ -20,10 +20,10 @@ Legend: **P0** blocks anything real · **P1** blocks public launch · **P2** aft
 
 ## P0 — nothing works without these
 
-> **Current blocker:** the database is live and correct, and that is exactly
-> why the app now shows nothing. Every policy requires an authenticated
-> `app_users` row, so the anon key reads zero profiles, zero contacts, even
-> zero taxonomy. Real auth (item 4) is now the single gate on everything else.
+> **Current blocker:** auth code is done and proven, but the Supabase project
+> has the Phone provider **disabled**, so nobody can sign in and the app shows
+> nothing. Two dashboard toggles unblock it — see item 4. After that, the write
+> path (item 3) is the only thing between here and storing a real biodata.
 
 ### 1. Stand up the database — ✅ DONE 2026-09-06
 - [x] Supabase project `fpdzrogmnnvibqsimlxp`
@@ -59,13 +59,30 @@ There are currently **zero** database writes in the codebase. `grep '\.insert('`
 - [ ] Share biodata card (2 buttons, both inert)
 - [ ] `/me` — list, edit, pause, withdraw your own profiles
 
-### 4. Real authentication
-- [ ] Replace `lib/auth.ts` — currently localStorage with OTP hardcoded to `123456`; **anyone can sign in as anyone**
-- [ ] Supabase Auth `signInWithOtp` / `verifyOtp`
-- [ ] Send SMS Hook → MSG91 (Next.js route handler + signing-secret verification)
-- [ ] Wire `handle_new_user` trigger through to a real `app_users` row
-- [ ] Rate limiting + CAPTCHA on the OTP endpoint (SMS cost abuse)
-- [ ] Server-side route protection — `AuthGate` is client-side and protects the experience, not the data
+### 4. Real authentication — ✅ CODE DONE 2026-09-06 · needs one dashboard toggle
+- [x] `lib/auth.ts` rewritten onto Supabase Auth `signInWithOtp` / `verifyOtp`
+- [x] Cookie-based sessions via `@supabase/ssr` (browser + server + middleware clients)
+- [x] **Fixed: the data layer built an anonymous client with no session**, which
+      under RLS can read nothing. All reads now use the request-scoped client.
+- [x] `handle_new_user` honours `communities.config.auto_activate_members`
+- [x] Server-side route guards on `/add` and `/me` (verified: 307 → /login)
+- [x] Verified end to end with a real JWT: signup → app_users active → 8 profiles
+      visible → 0 contacts visible → self-promotion rejected (42501)
+- [ ] **Enable the Phone provider + test numbers in the dashboard** — currently
+      `phone_provider_disabled`, so nobody can actually sign in
+- [ ] Send SMS Hook → MSG91 (needs DLT)
+- [ ] CAPTCHA on the OTP endpoint
+
+### 4b. Privilege escalation — ✅ FIXED 2026-09-06 (found during this work)
+RLS filters rows, not columns. Both `for update` policies let a member rewrite
+any column of a row they could touch:
+- [x] `update app_users set role='admin' where id=auth.uid()` — **worked**.
+      Fixed with column-level grants (`display_name`, `locale`, `last_seen_at` only)
+      plus `app.set_member_status()` for moderators.
+- [x] `update profiles set status='active'` — **worked**, bypassing moderation
+      entirely. Fixed with a transition-guard trigger; families may pause /
+      withdraw / mark married, only moderators may publish.
+- [x] 4 regression tests added — suite is now **20/20**
 
 ---
 

@@ -1,33 +1,26 @@
 'use client'
 
+import { createClient } from './supabase/client'
+import { supabaseConfigured } from './supabase/env'
+
 /**
- * Session handling.
+ * Phone-OTP auth against Supabase.
  *
- * This is a STAND-IN, not the real thing: it keeps the session in
- * localStorage and accepts a fixed demo OTP, so the whole journey is walkable
- * before Supabase is provisioned.
- *
- * Every function below maps 1:1 onto a Supabase Auth call, so switching over
- * is a change to this file alone:
- *   requestOtp → supabase.auth.signInWithOtp({ phone })
- *   verifyOtp  → supabase.auth.verifyOtp({ phone, token, type: 'sms' })
- *   getSession → supabase.auth.getSession()
- *   signOut    → supabase.auth.signOut()
- *
- * Real SMS goes through the Send SMS Hook to MSG91 — see docs/ARCHITECTURE.md.
- * TRAI DLT registration is a prerequisite and has a lead time.
+ * Real SMS goes through the Send SMS Hook to MSG91 (see docs/ARCHITECTURE.md),
+ * which needs TRAI DLT registration. Until that lands, enable the Phone
+ * provider in the dashboard and add test numbers with fixed codes — the flow
+ * below works unchanged against those.
  */
 
-export const DEMO_OTP = '123456'
+export type AuthResult = { ok: true } | { ok: false; error: AuthError }
 
-export type Session = {
-  phone: string
-  name: string
-  onboarded: boolean
-  verifiedAt: number
-}
-
-const KEY = 'samaj-setu:session'
+export type AuthError =
+  | 'invalid_phone'
+  | 'provider_disabled'
+  | 'invalid_code'
+  | 'rate_limited'
+  | 'not_configured'
+  | 'unknown'
 
 export function normalisePhone(input: string): string | null {
   const digits = input.replace(/\D/g, '')
@@ -41,54 +34,57 @@ export function displayPhone(e164: string): string {
   return d.length === 10 ? `+91 ${d.slice(0, 5)} ${d.slice(5)}` : e164
 }
 
-export async function requestOtp(phone: string): Promise<{ ok: boolean }> {
-  await delay(600)
-  return { ok: Boolean(normalisePhone(phone)) }
-}
+/** Maps GoTrue's error shapes onto something the UI can phrase in Gujarati. */
+function classify(err: { message?: string; code?: string; status?: number }): AuthError {
+  const code = err.code ?? ''
+  const msg = (err.message ?? '').toLowerCase()
 
-export async function verifyOtp(phone: string, code: string): Promise<Session | null> {
-  await delay(700)
-  if (code !== DEMO_OTP) return null
-
-  const existing = getSession()
-  const session: Session = {
-    phone,
-    name: existing?.phone === phone ? existing.name : '',
-    onboarded: existing?.phone === phone ? existing.onboarded : false,
-    verifiedAt: Date.now(),
+  if (code === 'phone_provider_disabled' || msg.includes('unsupported phone provider')) {
+    return 'provider_disabled'
   }
-  setSession(session)
-  return session
-}
-
-export function getSession(): Session | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as Session) : null
-  } catch {
-    return null
+  if (code === 'otp_expired' || msg.includes('invalid') || msg.includes('expired')) {
+    return 'invalid_code'
   }
-}
-
-export function setSession(s: Session) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(s))
-    window.dispatchEvent(new Event('samaj-session'))
-  } catch {
-    /* private browsing */
+  if (err.status === 429 || msg.includes('rate limit') || msg.includes('security purposes')) {
+    return 'rate_limited'
   }
+  return 'unknown'
 }
 
-export function signOut() {
-  try {
-    localStorage.removeItem(KEY)
-    window.dispatchEvent(new Event('samaj-session'))
-  } catch {
-    /* no-op */
-  }
+export async function requestOtp(phone: string): Promise<AuthResult> {
+  if (!supabaseConfigured) return { ok: false, error: 'not_configured' }
+
+  const e164 = normalisePhone(phone)
+  if (!e164) return { ok: false, error: 'invalid_phone' }
+
+  const { error } = await createClient().auth.signInWithOtp({ phone: e164 })
+  return error ? { ok: false, error: classify(error) } : { ok: true }
 }
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
+export async function verifyOtp(phone: string, token: string): Promise<AuthResult> {
+  if (!supabaseConfigured) return { ok: false, error: 'not_configured' }
+
+  const { error } = await createClient().auth.verifyOtp({ phone, token, type: 'sms' })
+  return error ? { ok: false, error: classify(error) } : { ok: true }
+}
+
+/** Onboarding: the display name lives on app_users, not in auth metadata. */
+export async function saveDisplayName(name: string): Promise<AuthResult> {
+  if (!supabaseConfigured) return { ok: false, error: 'not_configured' }
+
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'unknown' }
+
+  const { error } = await supabase
+    .from('app_users')
+    .update({ display_name: name.trim() })
+    .eq('id', user.id)
+
+  return error ? { ok: false, error: 'unknown' } : { ok: true }
+}
+
+export async function signOut() {
+  if (!supabaseConfigured) return
+  await createClient().auth.signOut()
 }

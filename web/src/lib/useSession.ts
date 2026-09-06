@@ -1,27 +1,75 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getSession, type Session } from './auth'
+import { createClient } from './supabase/client'
+import { supabaseConfigured } from './supabase/env'
+
+export type AppSession = {
+  userId: string
+  phone: string | null
+  displayName: string | null
+  /** 'pending' members can sign in but cannot browse — see the RLS policies. */
+  status: 'pending' | 'active' | 'suspended'
+  role: 'member' | 'moderator' | 'admin'
+  onboarded: boolean
+}
 
 /**
- * `loading` matters: the session lives in localStorage, so the server render
- * and the first client render both see "logged out". Rendering a login prompt
- * during that gap makes the app flash for every signed-in user.
+ * `loading` matters: the session lives in a cookie the client reads
+ * asynchronously, so both the server render and the first client render see
+ * "logged out". Rendering a login prompt in that gap flashes for every
+ * signed-in user.
  */
-export function useSession(): { session: Session | null; loading: boolean } {
-  const [session, setStateSession] = useState<Session | null>(null)
+export function useSession(): { session: AppSession | null; loading: boolean } {
+  const [session, setSession] = useState<AppSession | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const sync = () => setStateSession(getSession())
-    sync()
-    setLoading(false)
+    if (!supabaseConfigured) {
+      setLoading(false)
+      return
+    }
 
-    window.addEventListener('samaj-session', sync)
-    window.addEventListener('storage', sync) // another tab signed in or out
+    const supabase = createClient()
+    let cancelled = false
+
+    async function load(userId: string | undefined) {
+      if (!userId) {
+        if (!cancelled) setSession(null)
+        return
+      }
+      const { data } = await supabase
+        .from('app_users')
+        .select('id, phone_e164, display_name, status, role')
+        .eq('id', userId)
+        .maybeSingle()
+
+      if (cancelled) return
+      setSession(
+        data
+          ? {
+              userId: data.id,
+              phone: data.phone_e164,
+              displayName: data.display_name,
+              status: data.status,
+              role: data.role,
+              onboarded: Boolean(data.display_name),
+            }
+          : null,
+      )
+    }
+
+    supabase.auth.getUser().then(({ data }) => {
+      load(data.user?.id).finally(() => !cancelled && setLoading(false))
+    })
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      load(s?.user?.id)
+    })
+
     return () => {
-      window.removeEventListener('samaj-session', sync)
-      window.removeEventListener('storage', sync)
+      cancelled = true
+      sub.subscription.unsubscribe()
     }
   }, [])
 

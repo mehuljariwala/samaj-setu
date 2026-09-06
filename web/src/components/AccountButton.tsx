@@ -36,10 +36,10 @@ export function AccountButton() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label={t('loggedInAs', { name: session.name || session.phone })}
+        aria-label={t('loggedInAs', { name: session.displayName || session.phone || '' })}
         className="flex size-11 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary"
       >
-        {session.name ? initials(session.name) : <UserRound size={19} aria-hidden />}
+        {session.displayName ? initials(session.displayName) : <UserRound size={19} aria-hidden />}
       </button>
 
       {open && (
@@ -53,12 +53,12 @@ export function AccountButton() {
           />
           <div className="animate-rise absolute end-0 top-13 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-(--shadow-card-hover)">
             <p className="truncate px-2 py-1.5 text-sm text-fg-muted">
-              {t('loggedInAs', { name: session.name || session.phone })}
+              {t('loggedInAs', { name: session.displayName || session.phone || '' })}
             </p>
             <button
               type="button"
-              onClick={() => {
-                signOut()
+              onClick={async () => {
+                await signOut()
                 setOpen(false)
               }}
               className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 text-start text-sm font-medium text-danger transition-colors duration-150 hover:bg-danger-soft"

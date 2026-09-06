@@ -1,6 +1,9 @@
 import { getTranslations } from 'next-intl/server'
 import { AddProfileFlow } from '@/components/AddProfileFlow'
 import { AuthGate } from '@/components/AuthGate'
+import { getServerSession } from '@/lib/session'
+import { supabaseConfigured } from '@/lib/supabase/env'
+import { redirect } from '@/i18n/navigation'
 import { TopBar } from '@/components/TopBar'
 import { getTaxonomy } from '@/lib/data'
 
@@ -10,6 +13,12 @@ export default async function AddProfilePage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
+
+  // Server-side gate. AuthGate is client-side and protects the experience;
+  // this protects the route. RLS protects the data.
+  if (supabaseConfigured && !(await getServerSession())) {
+    redirect({ href: { pathname: '/login', query: { next: '/add' } }, locale })
+  }
   const t = await getTranslations('form')
   const tc = await getTranslations('common')
 

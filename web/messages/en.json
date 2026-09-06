@@ -314,7 +314,13 @@
     "welcomeBack": "Welcome back, {name}!",
     "accountReady": "Your account is ready 🎉",
     "accountReadyBody": "Now add a biodata — after that you can browse every profile.",
-    "startBiodata": "Add a biodata"
+    "startBiodata": "Add a biodata",
+    "errProviderDisabled": "SMS isn't switched on yet. Please tell the samaj admin.",
+    "errRateLimited": "Too many attempts. Please wait a little and try again.",
+    "errNotConfigured": "Not connected to the server.",
+    "errUnknown": "Something went wrong. Please try again.",
+    "pendingTitle": "Awaiting approval",
+    "pendingBody": "Your account is created. Once a samaj moderator approves you, you'll be able to browse profiles."
   },
   "search": {
     "lookingFor": "Looking for",

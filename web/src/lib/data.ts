@@ -1,18 +1,19 @@
 import 'server-only'
-import { createClient } from '@supabase/supabase-js'
 import { FIXTURE_PROFILES } from './fixtures'
+import { supabaseConfigured } from './supabase/env'
+import { createClient } from './supabase/server'
 import type { BrowseFilters, ProfileCard } from './types'
-
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 /** Supabase is optional in development. With no credentials the app serves
  *  fixtures, so `npm run dev` works on a fresh clone. */
-export const usingFixtures = !url || !anonKey
+export const usingFixtures = !supabaseConfigured
 
-function client() {
-  return createClient(url!, anonKey!, { auth: { persistSession: false } })
-}
+/**
+ * Every read goes through the request-scoped, cookie-bound client so it runs
+ * as the signed-in user and RLS applies. Building a bare anon client here —
+ * as this file used to — means no session, and therefore no rows.
+ */
+const client = createClient
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function rowToCard(r: any): ProfileCard {
@@ -100,7 +101,8 @@ function applyFilters(rows: ProfileCard[], f: BrowseFilters): ProfileCard[] {
 export async function getProfiles(filters: BrowseFilters): Promise<ProfileCard[]> {
   if (usingFixtures) return applyFilters(FIXTURE_PROFILES, filters)
 
-  let q = client().from('v_profile_card').select('*').eq('status', 'active').eq('gender', filters.gender)
+  const supabase = await client()
+  let q = supabase.from('v_profile_card').select('*').eq('status', 'active').eq('gender', filters.gender)
 
   const inList: Array<[string, string[] | undefined]> = [
     ['sub_community_code', filters.subCommunity],
@@ -140,7 +142,8 @@ export async function getProfiles(filters: BrowseFilters): Promise<ProfileCard[]
 export async function getProfileByRef(ref: string): Promise<ProfileCard | null> {
   if (usingFixtures) return FIXTURE_PROFILES.find((p) => p.publicRef === ref) ?? null
 
-  const { data, error } = await client()
+  const supabase = await client()
+  const { data, error } = await supabase
     .from('v_profile_card')
     .select('*')
     .eq('public_ref', ref)
@@ -159,7 +162,7 @@ export async function getCounts(): Promise<{ male: number; female: number }> {
     }
   }
 
-  const supabase = client()
+  const supabase = await client()
   const [male, female] = await Promise.all(
     (['male', 'female'] as const).map((g) =>
       supabase
@@ -220,7 +223,8 @@ export async function getTaxonomy(
     }))
   }
 
-  const { data, error } = await client()
+  const supabase = await client()
+  const { data, error } = await supabase
     .from('taxonomy_terms')
     .select('code,label_gu,label_en')
     .eq('kind', kind)
@@ -238,6 +242,7 @@ export async function getCities(): Promise<string[]> {
   if (usingFixtures) {
     return [...new Set(FIXTURE_PROFILES.map((p) => p.city).filter(Boolean) as string[])].sort()
   }
-  const { data } = await client().from('v_profile_card').select('city').eq('status', 'active')
+  const supabase = await client()
+  const { data } = await supabase.from('v_profile_card').select('city').eq('status', 'active')
   return [...new Set((data ?? []).map((r: { city: string | null }) => r.city).filter(Boolean) as string[])].sort()
 }

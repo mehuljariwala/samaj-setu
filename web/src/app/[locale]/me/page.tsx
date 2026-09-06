@@ -3,8 +3,23 @@ import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { TopBar } from '@/components/TopBar'
 import { AuthGate } from '@/components/AuthGate'
+import { getServerSession } from '@/lib/session'
+import { supabaseConfigured } from '@/lib/supabase/env'
+import { redirect } from '@/i18n/navigation'
 
-export default async function MinePage() {
+export default async function MinePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
+
+  // Server-side gate. AuthGate is client-side and protects the experience;
+  // this protects the route. RLS protects the data.
+  if (supabaseConfigured && !(await getServerSession())) {
+    redirect({ href: { pathname: '/login', query: { next: '/me' } }, locale })
+  }
+
   const t = await getTranslations('mine')
   const ti = await getTranslations('import')
 

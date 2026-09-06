@@ -15,7 +15,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(20);
 
 \set alice '11111111-1111-4111-8111-111111111111'
 \set bob   '22222222-2222-4222-8222-222222222222'
@@ -212,6 +212,49 @@ select set_config('request.jwt.claims',
 select isnt_empty(
   $$ select id from profiles where status = 'pending_review' $$,
   'a moderator can see the review queue'
+);
+
+-- ===========================================================================
+-- Privilege escalation
+--
+-- RLS filters rows, not columns. These four exist because both of the
+-- `for update` policies originally let a member rewrite any column of a row
+-- they were allowed to touch — including their own role, and their own
+-- profile's moderation status.
+-- ===========================================================================
+
+select set_config('request.jwt.claims',
+  json_build_object('sub', :'bob', 'role', 'authenticated')::text, true);
+
+select throws_ok(
+  format($$ update app_users set role = 'admin' where id = %L $$, :'bob'),
+  '42501',
+  null,
+  'a member cannot promote themselves to admin'
+);
+
+select throws_ok(
+  format($$ update app_users set status = 'active' where id = %L $$, :'bob'),
+  '42501',
+  null,
+  'a member cannot change their own membership status'
+);
+
+select throws_ok(
+  format($$ update profiles set status = 'active' where id = %L $$, :'p_draft'),
+  '42501',
+  null,
+  'a family cannot publish their own profile and bypass moderation'
+);
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub', :'alice', 'role', 'authenticated')::text, true);
+
+select lives_ok(
+  format($$ update profiles set status = 'paused' where id = %L $$, :'p_alice'),
+  'a family CAN pause their own live profile'
 );
 
 reset role;

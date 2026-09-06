@@ -1,6 +1,15 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, Loader2, PartyPopper, Phone, ShieldCheck, TriangleAlert } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Clock,
+  Loader2,
+  PartyPopper,
+  Phone,
+  ShieldCheck,
+  TriangleAlert,
+} from 'lucide-react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from '@/i18n/navigation'
@@ -8,14 +17,14 @@ import { Celebrate } from './Celebrate'
 import { cn } from '@/lib/cn'
 import { localeDigits } from '@/lib/format'
 import {
-  DEMO_OTP,
   displayPhone,
-  getSession,
   normalisePhone,
   requestOtp,
-  setSession,
+  saveDisplayName,
   verifyOtp,
+  type AuthError,
 } from '@/lib/auth'
+import { useSession } from '@/lib/useSession'
 
 type Step = 'phone' | 'otp' | 'name' | 'done'
 
@@ -25,6 +34,7 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
   const t = useTranslations('auth')
   const locale = useLocale()
   const router = useRouter()
+  const { session } = useSession()
 
   const [step, setStep] = useState<Step>('phone')
   const [phoneInput, setPhoneInput] = useState('')
@@ -41,6 +51,18 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
     return () => clearTimeout(id)
   }, [cooldown])
 
+  /** One place to phrase every GoTrue failure mode in the user's language. */
+  function message(err: AuthError): string {
+    switch (err) {
+      case 'invalid_phone': return t('phoneInvalid')
+      case 'invalid_code': return t('otpInvalid')
+      case 'provider_disabled': return t('errProviderDisabled')
+      case 'rate_limited': return t('errRateLimited')
+      case 'not_configured': return t('errNotConfigured')
+      default: return t('errUnknown')
+    }
+  }
+
   async function submitPhone() {
     const e164 = normalisePhone(phoneInput)
     if (!e164) {
@@ -49,36 +71,50 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
     }
     setBusy(true)
     setError(null)
-    await requestOtp(e164)
+
+    const res = await requestOtp(e164)
+    setBusy(false)
+
+    if (!res.ok) {
+      setError(message(res.error))
+      return
+    }
     setPhone(e164)
     setStep('otp')
     setCooldown(RESEND_SECONDS)
-    setBusy(false)
   }
 
   async function submitOtp(value: string) {
     setBusy(true)
     setError(null)
-    const session = await verifyOtp(phone, value)
+
+    const res = await verifyOtp(phone, value)
     setBusy(false)
 
-    if (!session) {
-      setError(t('otpInvalid'))
+    if (!res.ok) {
+      setError(message(res.error))
       setCode('')
       return
     }
-    // Returning users skip straight past the name step.
-    if (session.onboarded && session.name) {
-      setStep('done')
-      return
-    }
+    // useSession picks the new session up via onAuthStateChange; a returning
+    // member who already has a name skips straight past onboarding.
     setStep('name')
   }
 
-  function submitName() {
-    const existing = getSession()
-    if (!existing) return
-    setSession({ ...existing, name: name.trim(), onboarded: true })
+  // Once the session lands, a returning member shouldn't be asked their name
+  // again.
+  useEffect(() => {
+    if (step === 'name' && session?.onboarded) setStep('done')
+  }, [step, session])
+
+  async function submitName() {
+    setBusy(true)
+    const res = await saveDisplayName(name)
+    setBusy(false)
+    if (!res.ok) {
+      setError(message(res.error))
+      return
+    }
     setStep('done')
   }
 
@@ -89,7 +125,7 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
             <Phone size={26} aria-hidden />
           </span>
-          <h2 className="mt-4 text-2xl font-bold">{t('welcome')}</h2>
+          <h2 className="display mt-4 text-2xl">{t('welcome')}</h2>
           <p className="mt-2 text-fg-muted">{t('welcomeBody')}</p>
 
           <label htmlFor="phone" className="field-label mt-6">
@@ -119,8 +155,8 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
           </div>
 
           {error ? (
-            <p id="phone-error" role="alert" className="mt-2 flex items-center gap-1.5 text-sm font-medium text-danger">
-              <TriangleAlert size={15} aria-hidden />
+            <p id="phone-error" role="alert" className="mt-2 flex items-start gap-1.5 text-sm font-medium text-danger">
+              <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
               {error}
             </p>
           ) : (
@@ -158,10 +194,8 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
             {t('changeNumber')}
           </button>
 
-          <h2 className="mt-2 text-2xl font-bold">{t('otpTitle')}</h2>
-          <p className="mt-2 text-fg-muted">
-            {t('otpSentTo', { phone: displayPhone(phone) })}
-          </p>
+          <h2 className="display mt-2 text-2xl">{t('otpTitle')}</h2>
+          <p className="mt-2 text-fg-muted">{t('otpSentTo', { phone: displayPhone(phone) })}</p>
 
           <div className="mt-6">
             <OtpInput
@@ -177,17 +211,11 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
           </div>
 
           {error && (
-            <p role="alert" className="mt-3 flex items-center gap-1.5 text-sm font-medium text-danger">
-              <TriangleAlert size={15} aria-hidden />
+            <p role="alert" className="mt-3 flex items-start gap-1.5 text-sm font-medium text-danger">
+              <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
               {error}
             </p>
           )}
-
-          {/* The demo has no SMS provider wired up, so the code is shown here
-              rather than leaving the flow impossible to complete. */}
-          <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent">
-            {t('demoHint', { code: DEMO_OTP })}
-          </p>
 
           <button
             type="button"
@@ -201,7 +229,7 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
 
           <button
             type="button"
-            disabled={cooldown > 0}
+            disabled={cooldown > 0 || busy}
             onClick={async () => {
               await requestOtp(phone)
               setCooldown(RESEND_SECONDS)
@@ -217,7 +245,7 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
 
       {step === 'name' && (
         <div className="animate-in-right">
-          <h2 className="text-2xl font-bold">{t('nameTitle')}</h2>
+          <h2 className="display text-2xl">{t('nameTitle')}</h2>
           <p className="mt-2 text-fg-muted">{t('nameBody')}</p>
 
           <label htmlFor="name" className="field-label mt-6">
@@ -233,12 +261,19 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
             className="field-input"
           />
 
+          {error && (
+            <p role="alert" className="mt-2 text-sm font-medium text-danger">
+              {error}
+            </p>
+          )}
+
           <button
             type="button"
             onClick={submitName}
-            disabled={!name.trim()}
+            disabled={!name.trim() || busy}
             className="btn btn-primary mt-6 w-full"
           >
+            {busy && <Loader2 size={20} aria-hidden className="animate-spin" />}
             {t('finish')}
           </button>
         </div>
@@ -247,15 +282,36 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
       {step === 'done' && (
         <div className="relative flex flex-col items-center py-8 text-center">
           <Celebrate />
-          <span className="animate-pop flex size-20 items-center justify-center rounded-full bg-success-soft text-success">
-            <PartyPopper size={40} aria-hidden />
-          </span>
-          <h2 className="animate-rise mt-5 text-2xl font-bold" style={{ animationDelay: '120ms' }}>
-            {t('accountReady')}
-          </h2>
-          <p className="animate-rise mt-2 max-w-sm text-fg-muted" style={{ animationDelay: '180ms' }}>
-            {t('accountReadyBody')}
-          </p>
+
+          {/* A verified phone is not yet a browsing member: RLS requires
+              status='active', which a moderator grants. Saying so here beats
+              an empty browse page with no explanation. */}
+          {session && session.status !== 'active' ? (
+            <>
+              <span className="animate-pop flex size-20 items-center justify-center rounded-full bg-warning-soft text-warning">
+                <Clock size={40} aria-hidden />
+              </span>
+              <h2 className="display animate-rise mt-5 text-2xl" style={{ animationDelay: '120ms' }}>
+                {t('pendingTitle')}
+              </h2>
+              <p className="animate-rise mt-2 max-w-sm text-fg-muted" style={{ animationDelay: '180ms' }}>
+                {t('pendingBody')}
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="animate-pop flex size-20 items-center justify-center rounded-full bg-success-soft text-success">
+                <PartyPopper size={40} aria-hidden />
+              </span>
+              <h2 className="display animate-rise mt-5 text-2xl" style={{ animationDelay: '120ms' }}>
+                {t('accountReady')}
+              </h2>
+              <p className="animate-rise mt-2 max-w-sm text-fg-muted" style={{ animationDelay: '180ms' }}>
+                {t('accountReadyBody')}
+              </p>
+            </>
+          )}
+
           <button
             type="button"
             onClick={() => router.replace(next as '/add')}
@@ -271,8 +327,8 @@ export function LoginFlow({ next = '/add' }: { next?: string }) {
   )
 }
 
-/** Six boxes rather than one field: the digits stay individually legible, and
- *  a mis-typed one is obvious at a glance. Paste of a full code still works. */
+/** Six boxes rather than one field: each digit stays legible and a mis-typed
+ *  one is obvious. OS autofill and paste of a whole code both still work. */
 function OtpInput({
   value,
   onChange,
@@ -293,8 +349,7 @@ function OtpInput({
   function setDigit(index: number, digit: string) {
     const next = value.split('')
     next[index] = digit
-    const joined = next.join('').slice(0, 6)
-    onChange(joined)
+    onChange(next.join('').slice(0, 6))
     if (digit && index < 5) refs.current[index + 1]?.focus()
   }
 
