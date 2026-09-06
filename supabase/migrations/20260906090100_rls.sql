@@ -290,6 +290,15 @@ select
   st.code     as sect_code,
   st.label_gu as sect_gu,
   st.label_en as sect_en,
+  ed.code     as education_level_code,
+  ed.label_gu as education_level_gu,
+  ed.label_en as education_level_en,
+  oc.code     as occupation_type_code,
+  oc.label_gu as occupation_type_gu,
+  oc.label_en as occupation_type_en,
+  dt.code     as diet_code,
+  dt.label_gu as diet_gu,
+  dt.label_en as diet_en,
   f.mosal_name,
   f.mosal_surname,
   f.paternal_surname,
@@ -305,6 +314,9 @@ select
 from profiles p
 left join taxonomy_terms sc on sc.id = p.sub_community_term_id
 left join taxonomy_terms st on st.id = p.sect_term_id
+left join taxonomy_terms ed on ed.id = p.education_level_term_id
+left join taxonomy_terms oc on oc.id = p.occupation_type_term_id
+left join taxonomy_terms dt on dt.id = p.diet_term_id
 left join profile_family f  on f.profile_id = p.id
 left join profile_astro  a  on a.profile_id = p.id
 left join lateral (

@@ -9,6 +9,8 @@ import {
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import { GettingStarted } from '@/components/GettingStarted'
+import { HeroArt } from '@/components/art/HeroArt'
+import { Portrait } from '@/components/art/Portrait'
 import { HeroSearch } from '@/components/HeroSearch'
 import { ProfileCardItem } from '@/components/ProfileCardItem'
 import { TopBar } from '@/components/TopBar'
@@ -45,16 +47,16 @@ export default async function HomePage({
       <main id="main" className="pad-bottom-nav">
         {/* ---------------------------------------------------------- hero */}
         <section className="relative overflow-hidden">
-          {/* Photo slot. Ships as a warm gradient so the page is never broken;
-              drop a licensed image at /public/hero.jpg and set the background
-              on this element to swap it in. */}
+          {/* Warm wash behind the hero. Swap `.hero-photo` for a real
+              background-image once licensed photography exists. */}
           <div aria-hidden className="hero-photo absolute inset-0" />
           <div
             aria-hidden
             className="absolute inset-0 bg-gradient-to-r from-bg via-bg/92 to-bg/45 lg:to-transparent"
           />
 
-          <div className="container-app relative py-10 lg:py-20">
+          <div className="container-app relative py-10 lg:py-16">
+            <div className="lg:grid lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12">
             <div className="max-w-2xl">
               <span className="chip chip-accent">
                 <Sparkles size={14} aria-hidden />
@@ -89,6 +91,13 @@ export default async function HomePage({
               </ul>
             </div>
 
+              {/* Illustrated couple. Carries the warmth a flat gradient can't,
+                  without pretending a stock face is a real member. */}
+              <div className="mt-10 lg:mt-0">
+                <HeroArt />
+              </div>
+            </div>
+
             {/* Straddles the hero's lower edge, as in the reference. */}
             <div className="mt-9 lg:mt-14">
               <HeroSearch subCommunities={subCommunities.map(toOpt)} sects={sects.map(toOpt)} cities={cities} />
@@ -100,12 +109,14 @@ export default async function HomePage({
         <section className="bg-surface">
           <div className="container-app py-12 lg:py-20">
             <div className="lg:grid lg:grid-cols-2 lg:items-center lg:gap-14">
-              {/* Overlapping pair, borrowed from the reference. Both are
-                  decorative gradient panels until real photography exists —
-                  stock faces on a community site would undercut the point. */}
+              {/* Overlapping pair, borrowed from the reference. */}
               <div className="relative hidden aspect-4/3 lg:block">
-                <div className="hero-photo absolute inset-y-4 start-0 w-3/4 rounded-2xl" />
-                <div className="hero-photo animate-drift absolute inset-y-0 end-0 w-3/5 rounded-2xl border-4 border-surface shadow-(--shadow-card-hover)" />
+                <div className="absolute inset-y-4 start-0 w-3/5 overflow-hidden rounded-2xl">
+                  <Portrait seed="f1" gender="female" />
+                </div>
+                <div className="animate-drift absolute inset-y-0 end-0 w-3/5 overflow-hidden rounded-2xl border-4 border-surface shadow-(--shadow-card-hover)">
+                  <Portrait seed="m4" gender="male" />
+                </div>
               </div>
 
               <div>

@@ -9,13 +9,10 @@ import type { BrowseFilters, Gender } from '@/lib/types'
 
 type SearchParams = Record<string, string | string[] | undefined>
 
-function one(v: string | string[] | undefined): string | undefined {
-  return Array.isArray(v) ? v[0] : v
-}
+const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
 function list(v: string | string[] | undefined): string[] | undefined {
-  const s = one(v)
-  const parts = s?.split(',').filter(Boolean)
+  const parts = one(v)?.split(',').filter(Boolean)
   return parts?.length ? parts : undefined
 }
 
@@ -26,7 +23,10 @@ function num(v: string | string[] | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
+const SORTS = ['age', 'ageDesc', 'height'] as const
+
 function toFilters(sp: SearchParams): BrowseFilters {
+  const sort = one(sp.sort)
   return {
     gender: (one(sp.gender) === 'female' ? 'female' : 'male') as Gender,
     ageMin: num(sp.ageMin),
@@ -36,7 +36,16 @@ function toFilters(sp: SearchParams): BrowseFilters {
     subCommunity: list(sp.sub),
     sect: list(sp.sect),
     city: list(sp.city),
-    sort: one(sp.sort) === 'age' ? 'age' : 'newest',
+    educationLevel: list(sp.edu),
+    occupationType: list(sp.occ),
+    diet: list(sp.diet),
+    maritalStatus: list(sp.marital),
+    mangal: list(sp.mangal),
+    gan: list(sp.gan),
+    hasPhoto: Boolean(one(sp.photo)),
+    sort: SORTS.includes(sort as (typeof SORTS)[number])
+      ? (sort as BrowseFilters['sort'])
+      : 'newest',
   }
 }
 
@@ -48,16 +57,30 @@ export default async function BrowsePage({
   searchParams: Promise<SearchParams>
 }) {
   const { locale } = await params
-
   const sp = await searchParams
   const filters = toFilters(sp)
   const t = await getTranslations('browse')
 
-  const [profiles, subCommunities, sects, cities] = await Promise.all([
+  const [
+    profiles,
+    unfiltered,
+    subCommunities,
+    sects,
+    cities,
+    educationLevels,
+    occupationTypes,
+    diets,
+  ] = await Promise.all([
     getProfiles(filters),
+    // Denominator for "showing N of M", so a user can tell whether their own
+    // filters are why the list looks empty.
+    getProfiles({ gender: filters.gender }),
     getTaxonomy('sub_community', locale),
     getTaxonomy('sect', locale),
     getCities(),
+    getTaxonomy('education_level', locale),
+    getTaxonomy('occupation_type', locale),
+    getTaxonomy('diet', locale),
   ])
 
   return (
@@ -65,12 +88,11 @@ export default async function BrowsePage({
       <TopBar title={t('title')} />
 
       <main id="main" className="container-app pad-bottom-nav pt-4">
-        <Suspense fallback={<div className="h-14 animate-pulse rounded-full bg-surface-2" />}>
+        <Suspense fallback={<div className="skeleton h-14 rounded-full" />}>
           <BrowseControls
             resultCount={profiles.length}
-            subCommunities={subCommunities}
-            sects={sects}
-            cities={cities}
+            totalCount={unfiltered.length}
+            taxonomies={{ subCommunities, sects, cities, educationLevels, occupationTypes, diets }}
           />
         </Suspense>
 
@@ -81,7 +103,9 @@ export default async function BrowsePage({
             <p className="mt-1 text-sm text-fg-muted">{t('noResultsHint')}</p>
           </div>
         ) : (
-          <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          /* Two-up from the smallest screen: a parent comparing candidates
+             shouldn't have to scroll a full viewport per profile. */
+          <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
             {profiles.map((p, i) => (
               <ProfileCardItem key={p.id} profile={p} locale={locale} index={i} />
             ))}

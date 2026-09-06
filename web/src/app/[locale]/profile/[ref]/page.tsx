@@ -1,6 +1,7 @@
 import { Heart, Info, Lock, Share2, Flag, TriangleAlert } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { Portrait } from '@/components/art/Portrait'
 import { TopBar } from '@/components/TopBar'
 import { getProfileByRef } from '@/lib/data'
 import {
@@ -8,7 +9,6 @@ import {
   formatAge,
   formatHeight,
   ganLabel,
-  initials,
   localeDigits,
   mangalLabel,
   sectLabel,
@@ -40,6 +40,7 @@ export default async function ProfilePage({
   const t = await getTranslations('profile')
   const tCommon = await getTranslations('common')
   const tBrowse = await getTranslations('browse')
+  const tCard = await getTranslations('card')
 
   const name = displayName(profile, locale)
   const sub = subCommunityLabel(profile, locale)
@@ -68,21 +69,21 @@ export default async function ProfilePage({
         <div className="lg:grid lg:grid-cols-[22rem_1fr] lg:items-start lg:gap-6">
         <div className="lg:sticky lg:top-24">
         <section className="card flex gap-4 p-4 lg:flex-col lg:items-start">
-          <div className="size-24 shrink-0 overflow-hidden rounded-2xl bg-surface-2">
-            {profile.photoUnlocked && profile.photoKey ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={profile.photoKey} alt="" className="size-full object-cover" width={96} height={96} />
-            ) : (
-              <div
-                className="flex size-full flex-col items-center justify-center gap-1.5 text-fg-subtle"
+          <div className="relative size-24 shrink-0 overflow-hidden rounded-2xl bg-surface-2 lg:size-full lg:rounded-xl">
+            <Portrait
+              seed={profile.photoUnlocked && profile.photoKey ? profile.photoKey : profile.publicRef}
+              gender={profile.gender}
+              className={profile.photoUnlocked && profile.photoKey ? undefined : 'scale-110 blur-md'}
+            />
+            {!(profile.photoUnlocked && profile.photoKey) && (
+              <span
+                className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-surface/90 py-1 text-xs font-medium text-fg-muted backdrop-blur"
                 role="img"
                 aria-label={t('photoLocked')}
               >
-                <span aria-hidden className="text-2xl font-bold">
-                  {initials(profile.fullNameEn ?? name)}
-                </span>
-                <Lock size={16} aria-hidden />
-              </div>
+                <Lock size={11} aria-hidden />
+                {tCard('photoPrivate')}
+              </span>
             )}
           </div>
 

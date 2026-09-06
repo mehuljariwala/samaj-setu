@@ -29,6 +29,15 @@ export type ProfileCard = {
   sectCode: string | null
   sectGu: string | null
   sectEn: string | null
+  educationLevelCode: string | null
+  educationLevelGu: string | null
+  educationLevelEn: string | null
+  occupationTypeCode: string | null
+  occupationTypeGu: string | null
+  occupationTypeEn: string | null
+  dietCode: string | null
+  dietGu: string | null
+  dietEn: string | null
   mosalName: string | null
   mosalSurname: string | null
   paternalSurname: string | null
@@ -57,7 +66,16 @@ export type BrowseFilters = {
   subCommunity?: string[]
   sect?: string[]
   city?: string[]
-  sort?: 'newest' | 'age'
+  educationLevel?: string[]
+  occupationType?: string[]
+  diet?: string[]
+  maritalStatus?: string[]
+  /** 'none' means non-manglik (સાદો) — the single most-asked question. */
+  mangal?: string[]
+  gan?: string[]
+  /** Only profiles whose family has released a photo. */
+  hasPhoto?: boolean
+  sort?: 'newest' | 'age' | 'ageDesc' | 'height'
 }
 
 /** One renderable reason on a match card. Product principle 4: show the

@@ -75,7 +75,22 @@
     "education": "Education",
     "city": "City",
     "anyOption": "Any",
-    "years": "years"
+    "years": "years",
+    "sortNewestLabel": "Newest first",
+    "sortAgeAsc": "Youngest first",
+    "sortAgeDesc": "Oldest first",
+    "sortHeight": "By height",
+    "occupation": "Occupation",
+    "diet": "Diet",
+    "marital": "Marital status",
+    "mangal": "Mangal",
+    "gan": "Gan",
+    "onlyWithPhoto": "Only profiles with a photo",
+    "moreFilters": "More filters",
+    "lessFilters": "Show less",
+    "activeFilters": "Active filters",
+    "removeFilter": "Remove",
+    "showing": "{count} of {total}"
   },
   "profile": {
     "personal": "Personal details",

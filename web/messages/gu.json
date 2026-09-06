@@ -75,7 +75,22 @@
     "education": "અભ્યાસ",
     "city": "શહેર",
     "anyOption": "કોઈપણ",
-    "years": "વર્ષ"
+    "years": "વર્ષ",
+    "sortNewestLabel": "નવા પહેલા",
+    "sortAgeAsc": "નાની ઉંમર પહેલા",
+    "sortAgeDesc": "મોટી ઉંમર પહેલા",
+    "sortHeight": "ઊંચાઈ પ્રમાણે",
+    "occupation": "વ્યવસાય",
+    "diet": "ખોરાક",
+    "marital": "વૈવાહિક સ્થિતિ",
+    "mangal": "મંગળ",
+    "gan": "ગણ",
+    "onlyWithPhoto": "ફક્ત ફોટાવાળી પ્રોફાઈલ",
+    "moreFilters": "વધુ ગાળણ",
+    "lessFilters": "ઓછું બતાવો",
+    "activeFilters": "ચાલુ ગાળણ",
+    "removeFilter": "કાઢી નાખો",
+    "showing": "{count} માંથી {total}"
   },
   "profile": {
     "personal": "વ્યક્તિગત વિગત",

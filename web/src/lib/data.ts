@@ -35,6 +35,15 @@ function rowToCard(r: any): ProfileCard {
     sectCode: r.sect_code,
     sectGu: r.sect_gu,
     sectEn: r.sect_en,
+    educationLevelCode: r.education_level_code,
+    educationLevelGu: r.education_level_gu,
+    educationLevelEn: r.education_level_en,
+    occupationTypeCode: r.occupation_type_code,
+    occupationTypeGu: r.occupation_type_gu,
+    occupationTypeEn: r.occupation_type_en,
+    dietCode: r.diet_code,
+    dietGu: r.diet_gu,
+    dietEn: r.diet_en,
     mosalName: r.mosal_name,
     mosalSurname: r.mosal_surname,
     paternalSurname: r.paternal_surname,
@@ -59,13 +68,33 @@ function applyFilters(rows: ProfileCard[], f: BrowseFilters): ProfileCard[] {
   if (f.ageMax != null) out = out.filter((p) => (p.ageYears ?? 999) <= f.ageMax!)
   if (f.heightMinCm != null) out = out.filter((p) => (p.heightCm ?? 0) >= f.heightMinCm!)
   if (f.heightMaxCm != null) out = out.filter((p) => (p.heightCm ?? 999) <= f.heightMaxCm!)
-  if (f.subCommunity?.length)
-    out = out.filter((p) => f.subCommunity!.includes(p.subCommunityCode ?? ''))
-  if (f.sect?.length) out = out.filter((p) => f.sect!.includes(p.sectCode ?? ''))
-  if (f.city?.length) out = out.filter((p) => f.city!.includes(p.city ?? ''))
 
-  if (f.sort === 'age') out = [...out].sort((a, b) => (a.ageYears ?? 0) - (b.ageYears ?? 0))
-  return out
+  const anyOf = (values: string[] | undefined, pick: (p: ProfileCard) => string | null) =>
+    values?.length ? (p: ProfileCard) => values.includes(pick(p) ?? '') : null
+
+  for (const pred of [
+    anyOf(f.subCommunity, (p) => p.subCommunityCode),
+    anyOf(f.sect, (p) => p.sectCode),
+    anyOf(f.city, (p) => p.city),
+    anyOf(f.educationLevel, (p) => p.educationLevelCode),
+    anyOf(f.occupationType, (p) => p.occupationTypeCode),
+    anyOf(f.diet, (p) => p.dietCode),
+    anyOf(f.maritalStatus, (p) => p.maritalStatus),
+    anyOf(f.mangal, (p) => p.mangal),
+    anyOf(f.gan, (p) => p.gan),
+  ]) {
+    if (pred) out = out.filter(pred)
+  }
+
+  if (f.hasPhoto) out = out.filter((p) => p.photoUnlocked)
+
+  const sorters: Record<string, (a: ProfileCard, b: ProfileCard) => number> = {
+    age: (a, b) => (a.ageYears ?? 0) - (b.ageYears ?? 0),
+    ageDesc: (a, b) => (b.ageYears ?? 0) - (a.ageYears ?? 0),
+    height: (a, b) => (b.heightCm ?? 0) - (a.heightCm ?? 0),
+  }
+  const sorter = f.sort ? sorters[f.sort] : undefined
+  return sorter ? [...out].sort(sorter) : out
 }
 
 export async function getProfiles(filters: BrowseFilters): Promise<ProfileCard[]> {
@@ -73,15 +102,35 @@ export async function getProfiles(filters: BrowseFilters): Promise<ProfileCard[]
 
   let q = client().from('v_profile_card').select('*').eq('status', 'active').eq('gender', filters.gender)
 
-  if (filters.subCommunity?.length) q = q.in('sub_community_code', filters.subCommunity)
-  if (filters.sect?.length) q = q.in('sect_code', filters.sect)
-  if (filters.city?.length) q = q.in('city', filters.city)
+  const inList: Array<[string, string[] | undefined]> = [
+    ['sub_community_code', filters.subCommunity],
+    ['sect_code', filters.sect],
+    ['city', filters.city],
+    ['education_level_code', filters.educationLevel],
+    ['occupation_type_code', filters.occupationType],
+    ['diet_code', filters.diet],
+    ['marital_status', filters.maritalStatus],
+    ['mangal', filters.mangal],
+    ['gan', filters.gan],
+  ]
+  for (const [column, values] of inList) {
+    if (values?.length) q = q.in(column, values)
+  }
+
   if (filters.heightMinCm != null) q = q.gte('height_cm', filters.heightMinCm)
   if (filters.heightMaxCm != null) q = q.lte('height_cm', filters.heightMaxCm)
   if (filters.ageMin != null) q = q.gte('age_years', filters.ageMin)
   if (filters.ageMax != null) q = q.lte('age_years', filters.ageMax)
+  if (filters.hasPhoto) q = q.not('photo_key', 'is', null)
 
-  q = filters.sort === 'age' ? q.order('age_years') : q.order('public_ref', { ascending: false })
+  q =
+    filters.sort === 'age'
+      ? q.order('age_years')
+      : filters.sort === 'ageDesc'
+        ? q.order('age_years', { ascending: false })
+        : filters.sort === 'height'
+          ? q.order('height_cm', { ascending: false })
+          : q.order('public_ref', { ascending: false })
 
   const { data, error } = await q.limit(100)
   if (error) throw new Error(`getProfiles: ${error.message}`)
