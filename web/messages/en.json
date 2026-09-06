@@ -38,7 +38,21 @@
     "j2": "Add a biodata",
     "j2Body": "Fill in the form, or paste it from WhatsApp.",
     "j3": "Browse profiles",
-    "j3Body": "Find the right match and send an interest."
+    "j3Body": "Find the right match and send an interest.",
+    "heroAccent": "The right family, the right match",
+    "trustMembersLabel": "Families in the samaj",
+    "trustVerifiedLabel": "Moderator checked",
+    "trustVerifiedValue": "100%",
+    "trustPrivacyValue": "Private",
+    "trustPrivacyLabel": "Numbers stay hidden",
+    "storyTitle": "We believe",
+    "storyAccent": "a match begins with trust",
+    "storyBody1": "This is only for families of the samaj. Nobody outside can join, and a moderator reviews every biodata before it goes live.",
+    "storyBody2": "Mosal, Bhagat/Jagat and the kundali are filtered automatically — so a family that can't work is never shown to you in the first place. It saves both sides the phone call.",
+    "storyCta": "Add your biodata",
+    "recentTitle": "Recently added",
+    "recentSubtitle": "Moderator-checked profiles",
+    "viewAll": "See all"
   },
   "browse": {
     "title": "Browse profiles",
@@ -286,5 +300,34 @@
     "accountReady": "Your account is ready 🎉",
     "accountReadyBody": "Now add a biodata — after that you can browse every profile.",
     "startBiodata": "Add a biodata"
+  },
+  "search": {
+    "lookingFor": "Looking for",
+    "bride": "A bride",
+    "groom": "A groom",
+    "ageRange": "Age range",
+    "community": "Sub-community",
+    "sect": "Bhagat / Jagat",
+    "city": "City",
+    "any": "Any",
+    "search": "Search"
+  },
+  "card": {
+    "viewProfile": "View profile",
+    "shortlist": "Shortlist",
+    "verified": "Verified",
+    "photoPrivate": "Photo is private"
+  },
+  "footer": {
+    "about": "For Surti, Khambhati, Ahmedabadi and Indori Khatri Kshatriya families. Free, always.",
+    "quickLinks": "Links",
+    "support": "Support",
+    "helpCenter": "Help centre",
+    "privacyPolicy": "Privacy policy",
+    "terms": "Terms",
+    "safety": "Safety tips",
+    "report": "Report a problem",
+    "aboutUs": "About us",
+    "rights": "© {year} Samaj Setu. For the samaj, by the samaj."
   }
 }

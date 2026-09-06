@@ -87,7 +87,7 @@ export default async function ProfilePage({
           </div>
 
           <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-bold leading-snug">{name}</h2>
+            <h2 className="display text-xl leading-snug">{name}</h2>
             <p className="tabular mt-1 text-fg-muted">
               {[
                 formatAge(profile.ageYears, locale) &&

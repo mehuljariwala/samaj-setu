@@ -81,7 +81,7 @@ export function TopBar({
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-xl font-bold">{title}</h1>
+          <h1 className="display truncate text-xl">{title}</h1>
           {subtitle && <p className="truncate text-sm text-fg-muted">{subtitle}</p>}
         </div>
         <LanguageToggle />

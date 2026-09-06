@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next'
-import { Noto_Sans_Gujarati } from 'next/font/google'
+import { Noto_Sans_Gujarati, Noto_Serif_Gujarati } from 'next/font/google'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { BottomNav } from '@/components/BottomNav'
+import { Footer } from '@/components/Footer'
 import { SideNav } from '@/components/SideNav'
 import { routing } from '@/i18n/routing'
 import '../globals.css'
@@ -19,6 +20,19 @@ const noto = Noto_Sans_Gujarati({
   weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-noto-gujarati',
+})
+
+/**
+ * Serif for display headings only. An all-sans page reads like a government
+ * form; a serif headline is what makes the reference designs feel warm. Using
+ * the Noto *serif* sibling keeps Gujarati and Latin metrically consistent, so
+ * mixed-script headings don't fracture mid-line.
+ */
+const notoSerif = Noto_Serif_Gujarati({
+  subsets: ['gujarati', 'latin'],
+  weight: ['500', '600', '700'],
+  display: 'swap',
+  variable: '--font-noto-serif-gujarati',
 })
 
 export function generateStaticParams() {
@@ -61,7 +75,7 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound()
 
   return (
-    <html lang={locale} className={noto.variable}>
+    <html lang={locale} className={`${noto.variable} ${notoSerif.variable}`}>
       <body className={`${noto.className} min-h-dvh`}>
         <NextIntlClientProvider>
           <a
@@ -72,7 +86,10 @@ export default async function LocaleLayout({
           </a>
           <div className="lg:flex">
             <SideNav />
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
+              <div className="flex-1">{children}</div>
+              <Footer />
+            </div>
           </div>
           <BottomNav />
         </NextIntlClientProvider>

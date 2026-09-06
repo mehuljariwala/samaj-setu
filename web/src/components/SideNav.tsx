@@ -26,7 +26,7 @@ export function SideNav() {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border bg-surface px-3 py-5 lg:flex">
       <Link href="/" className="mb-6 block px-3">
-        <span className="block text-xl font-bold text-primary">{tApp('name')}</span>
+        <span className="display block text-xl text-primary">{tApp('name')}</span>
         <span className="mt-0.5 block text-xs leading-snug text-fg-subtle">
           {tApp('tagline')}
         </span>

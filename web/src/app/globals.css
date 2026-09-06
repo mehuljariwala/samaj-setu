@@ -18,9 +18,14 @@
  * clear WCAG AA at 4.5:1.
  */
 @theme {
-  --color-bg:            #fafaf8;
+  /* Warmed a step toward blush/cream. The reference designs get most of
+   * their warmth from the surface, not the accent — that's how you feel
+   * welcoming without shouting in pink. */
+  --color-bg:            #fdfbf8;
   --color-surface:       #ffffff;
-  --color-surface-2:     #f3f2ee;
+  --color-surface-2:     #f6f1ea;
+  --color-blush:         #fdf1ea;
+  --color-ink:           #2a1a1e;  /* deep warm brown, footer ground */
   --color-fg:            #1a1917;  /* 16.8:1 on bg */
   --color-fg-muted:      #5c5952;  /*  6.7:1 on bg */
   --color-fg-subtle:     #87837b;  /*  3.6:1 — decorative/meta only */
@@ -70,6 +75,8 @@
   --shadow-sheet: 0 -4px 24px rgb(26 25 23 / 0.12);
 
   --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --font-display: var(--font-noto-serif-gujarati), Georgia, serif;
 }
 
 
@@ -102,6 +109,15 @@
   button, [role='button'], a { -webkit-tap-highlight-color: transparent; }
 
   h1, h2, h3 { line-height: 1.35; font-weight: 700; text-wrap: balance; }
+
+  /* Opt-in, not automatic: section titles and hero lines get the serif, UI
+     labels and buttons stay sans so they remain crisp at small sizes. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
   p { text-wrap: pretty; }
 
   .tabular { font-variant-numeric: tabular-nums; }
@@ -205,6 +221,22 @@
   .chip-accent  { background: var(--color-accent-soft);  color: var(--color-accent);  border-color: transparent; }
   .chip-warning { background: var(--color-warning-soft); color: var(--color-warning); border-color: transparent; }
 
+  /* Borderless select for the hero search bar: the card already provides the
+     container, so per-field borders would make it look like five inputs
+     rather than one control. */
+  .hs-select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 0.5rem;
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--color-fg);
+    background: transparent;
+    border: 0;
+    border-radius: 0.5rem;
+  }
+  .hs-select:focus { outline-offset: 0; }
+
   .field-label {
     display: block;
     font-size: var(--text-sm);
@@ -229,6 +261,19 @@
 
   /* Clears the fixed bottom nav plus the Android gesture bar. The nav is
    * mobile-only, so the reservation is too. */
+  /* Photograph slot for the hero. Ships with a warm gradient so the page
+     looks finished before any asset exists; drop a file at the documented
+     path and it takes over. */
+  .hero-photo {
+    background-color: var(--color-blush);
+    background-image:
+      radial-gradient(70% 90% at 82% 18%, rgb(138 90 8 / 0.16), transparent 62%),
+      radial-gradient(60% 80% at 18% 88%, rgb(14 90 86 / 0.14), transparent 60%),
+      linear-gradient(160deg, var(--color-blush), var(--color-surface-2));
+    background-size: cover;
+    background-position: center;
+  }
+
   .pad-bottom-nav { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
   @media (min-width: 1024px) { .pad-bottom-nav { padding-bottom: 3rem; } }
 }
