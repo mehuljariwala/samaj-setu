@@ -134,6 +134,14 @@ any column of a row they could touch:
 - [ ] Janmakshar upload (families have the paper horoscope as a photo)
 
 ### 9. Production hygiene
+- [x] **Demo deployed 2026-09-07** — https://samaj-setu-alpha.vercel.app
+      Vercel project `samaj-setu`, deployed from `web/`, framework `nextjs`.
+      **Zero env vars set on purpose**, so `supabaseConfigured` is false and the
+      app serves `FIXTURE_PROFILES`: browse works with no login, every mutation
+      returns `demo_mode`, and `DemoBanner` renders. Adding the Supabase keys
+      flips all three at once — the banner disappears by itself.
+      Deployment Protection was on by default and had to be disabled, or the
+      whole site 302s to Vercel SSO.
 - [ ] Deploy target + CI (build, typecheck, tests, `supabase test db`)
 - [ ] Error monitoring
 - [ ] Backups verified
@@ -168,10 +176,10 @@ any column of a row they could touch:
 ## Suggested order
 
 1. TRAI DLT registration (external clock starts now)
-2. Deploy the fixture build as a demo, with a "nothing is saved" banner — get samaj feedback before building three weeks of persistence
-3. Supabase project + migrations + **RLS suite green**
-4. Real auth
-5. Write path
+2. ~~Deploy the fixture build as a demo, with a "nothing is saved" banner~~ — ✅ 2026-09-07
+3. ~~Supabase project + migrations + **RLS suite green**~~ — ✅ 2026-09-06
+4. ~~Real auth~~ — code ✅, **blocked on the Phone provider dashboard toggle**
+5. ~~Write path~~ — ✅, minus the `/interests` and `/me` UIs
 6. Moderator queue
 7. Photos
 8. Legal pages
