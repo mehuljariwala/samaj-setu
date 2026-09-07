@@ -111,6 +111,20 @@ any column of a row they could touch:
 - [ ] Register the entity, sender ID and message templates
 - [ ] Days-to-weeks of external lead time. **No SMS OTP in India without it.**
 - [ ] Independent of all engineering work — begin immediately
+- [ ] Documents to gather: GST, PAN, incorporation certificate. Register once on
+      any operator portal (Airtel / Jio / Vi / BSNL) and it syncs to the rest.
+      Sender ID is 6 alphanumeric chars; templates mark variables as `{#var#}`.
+- [ ] Any URL in a template must be a full pre-whitelisted URL — shorteners
+      (bit.ly, tinyurl) are silently dropped during scrubbing.
+
+**Provider: MSG91, confirmed 2026-09-07. Do not relitigate.**
+Twilio was evaluated the same day and rejected. It is not a DLT shortcut —
+domestic India sending needs your own DLT registration whichever vendor sits in
+front of it, so Twilio buys nothing and costs more per SMS for India. The trial
+account is also structurally unable to help: it can only send to ≤5 manually
+verified numbers, and India local numbers return 404 as unavailable. The A2P
+10DLC material that dominates Twilio's docs is US-only and irrelevant here.
+`docs/ARCHITECTURE.md:125` already routes MSG91 through the Send SMS Hook.
 
 ### 6. DPDP Act 2023
 - [ ] Privacy policy page — currently a plain label in the footer, not a link
