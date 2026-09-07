@@ -173,69 +173,6 @@ export function SelectField({
   )
 }
 
-/** Big tappable cards for a short, important single choice (gender, relation). */
-export function ChoiceCards({
-  value,
-  onChange,
-  options,
-  columns = 2,
-  ...f
-}: Omit<Common, 'id'> & {
-  id: string
-  value: string
-  onChange: (v: string) => void
-  options: Array<{ value: string; label: string; icon?: ReactNode }>
-  columns?: 2 | 3
-}) {
-  return (
-    <fieldset>
-      <legend className="field-label">
-        {f.label}
-        {f.required && (
-          <span className="text-danger" aria-hidden>
-            {' '}
-            *
-          </span>
-        )}
-      </legend>
-
-      <div className={cn('grid gap-2', columns === 2 ? 'grid-cols-2' : 'grid-cols-3')}>
-        {options.map((o) => {
-          const on = value === o.value
-          return (
-            <button
-              key={o.value}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              onClick={() => onChange(o.value)}
-              className={cn(
-                'flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-3 text-base font-semibold transition-colors duration-150',
-                on
-                  ? 'border-primary bg-primary-soft text-primary'
-                  : 'border-border bg-surface text-fg-muted hover:border-border-strong',
-              )}
-            >
-              {o.icon}
-              {o.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {f.hint && !f.error && (
-        <p className="mt-1.5 text-sm leading-snug text-fg-muted">{f.hint}</p>
-      )}
-      {f.error && (
-        <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-danger">
-          <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
-          {f.error}
-        </p>
-      )}
-    </fieldset>
-  )
-}
-
 /** Pill choices for a taxonomy with a handful of options. */
 export function ChipChoice({
   value,
@@ -288,6 +225,100 @@ export function ChipChoice({
       )}
       {f.error && (
         <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-sm font-medium text-danger">
+          <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
+          {f.error}
+        </p>
+      )}
+    </fieldset>
+  )
+}
+
+/**
+ * Full-width stacked choices — the default for a single-answer screen.
+ *
+ * Preferred over a native select wherever the options fit on screen: the
+ * label sits on one line at full reading size instead of being squeezed into
+ * a half-width tile, and the whole row is the tap target. That
+ * matters for an audience who are largely 45-65 and reading Gujarati at arm's
+ * length.
+ */
+export function OptionList({
+  value,
+  onChange,
+  options,
+  ...f
+}: Omit<Common, 'id'> & {
+  id: string
+  value: string
+  onChange: (v: string) => void
+  options: Array<{ value: string; label: string; hint?: string }>
+}) {
+  return (
+    <fieldset>
+      {f.label && (
+        <legend className="field-label">
+          {f.label}
+          {f.required && (
+            <span className="text-danger" aria-hidden>
+              {' '}
+              *
+            </span>
+          )}
+        </legend>
+      )}
+
+      <div role="radiogroup" aria-label={f.label} className="space-y-2.5">
+        {options.map((o) => {
+          const on = value === o.value
+          return (
+            <button
+              key={o.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                'flex min-h-16 w-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-colors duration-150',
+                on
+                  ? 'border-primary bg-primary-soft'
+                  : 'border-border bg-surface hover:border-border-strong',
+              )}
+            >
+              <span className="min-w-0 flex-1">
+                <span
+                  className={cn(
+                    'block text-lg font-semibold',
+                    on ? 'text-primary' : 'text-fg',
+                  )}
+                >
+                  {o.label}
+                </span>
+                {o.hint && (
+                  <span className="mt-0.5 block text-sm leading-snug text-fg-muted">
+                    {o.hint}
+                  </span>
+                )}
+              </span>
+
+              <span
+                className={cn(
+                  'flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-150',
+                  on ? 'border-primary bg-primary text-on-primary' : 'border-border-strong',
+                )}
+                aria-hidden
+              >
+                {on && <Check size={15} strokeWidth={3} />}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {f.hint && !f.error && (
+        <p className="mt-2 text-sm leading-snug text-fg-muted">{f.hint}</p>
+      )}
+      {f.error && (
+        <p role="alert" className="mt-2 flex items-start gap-1.5 text-sm font-medium text-danger">
           <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
           {f.error}
         </p>

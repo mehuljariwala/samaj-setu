@@ -19,15 +19,17 @@ import { submitProfile } from '@/lib/actions'
 import {
   CheckboxField,
   ChipChoice,
-  ChoiceCards,
+  OptionList,
   SelectField,
   TextAreaField,
   TextField,
 } from './form/Fields'
+import { ProgressBar, QuestionScreen } from './form/QuestionScreen'
 import { cn } from '@/lib/cn'
 import { formatHeight, localeDigits } from '@/lib/format'
 import {
   EMPTY_FORM,
+  STEPS,
   STEP_COUNT,
   clearDraft,
   computedAge,
@@ -36,6 +38,7 @@ import {
   validateStep,
   type FormErrors,
   type ProfileFormData,
+  type StepId,
 } from '@/lib/profileForm'
 
 export type TaxonomyOption = { value: string; label: string }
@@ -75,14 +78,18 @@ export function ProfileForm({
   const locale = useLocale()
 
   const [data, setData] = useState<ProfileFormData>(initial ?? EMPTY_FORM)
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState<StepId>(STEPS[0])
   const [errors, setErrors] = useState<FormErrors>({})
   const [done, setDone] = useState(false)
-  const [publicRef, setPublicRef] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const topRef = useRef<HTMLDivElement>(null)
+  const headingRef = useRef<HTMLDivElement>(null)
+  // Skips the focus move on first paint, so landing on the form doesn't yank
+  // the viewport past the page heading.
+  const mounted = useRef(false)
 
+  const index = STEPS.indexOf(step)
+  const isLast = index === STEP_COUNT - 1
   const prefilledSet = new Set(prefilled ?? [])
 
   // Restore an interrupted session, but never over a paste-seeded form.
@@ -98,6 +105,22 @@ export function ProfileForm({
   useEffect(() => {
     if (!done) saveDraft(data, step)
   }, [data, step, done])
+
+  // Each screen replaces the last, so focus has to follow or a screen reader
+  // stays parked on the previous question.
+  //
+  // preventScroll matters: letting focus() do the scrolling lands the heading
+  // under the sticky TopBar and hides the progress bar, so the family loses
+  // both "where am I" and the question itself. Scroll to the top of the flow
+  // explicitly instead.
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    headingRef.current?.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true })
+  }, [step])
 
   function set<K extends keyof ProfileFormData>(key: K, value: ProfileFormData[K]) {
     setData((d) => ({ ...d, [key]: value }))
@@ -123,15 +146,13 @@ export function ProfileForm({
     const found = validateStep(step, data, errMsg)
     if (Object.keys(found).length) {
       setErrors(found)
-      // Move focus to the first thing that's wrong rather than leaving the
-      // user to hunt for the red text.
       const first = document.querySelector<HTMLElement>('[aria-invalid="true"], [role="alert"]')
       first?.scrollIntoView({ block: 'center', behavior: 'smooth' })
       return
     }
     setErrors({})
 
-    if (step === STEP_COUNT) {
+    if (isLast) {
       setSubmitting(true)
       setSubmitError(null)
 
@@ -146,19 +167,16 @@ export function ProfileForm({
       }
 
       clearDraft()
-      setPublicRef(res.data.publicRef)
       setDone(true)
       return
     }
 
-    setStep((s) => s + 1)
-    topRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    setStep(STEPS[index + 1])
   }
 
   function goBack() {
     setErrors({})
-    setStep((s) => Math.max(1, s - 1))
-    topRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    if (index > 0) setStep(STEPS[index - 1])
   }
 
   if (done) {
@@ -176,39 +194,75 @@ export function ProfileForm({
     )
   }
 
-  const stepLabels = [t('step1'), t('step2'), t('step3'), t('step4'), t('step5'), t('step6')]
-
   return (
-    <div ref={topRef}>
-      <Stepper current={step} labels={stepLabels} onJump={(s) => s < step && setStep(s)} />
+    <div>
+      {/* Progress and Back share a row: on a phone the two things a family
+          wants — "how far in am I" and "undo that" — stay side by side. */}
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={goBack}
+          disabled={index === 0}
+          aria-label={t('back')}
+          className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-full text-fg-muted transition-colors duration-150 hover:bg-surface-2 disabled:pointer-events-none disabled:opacity-0"
+        >
+          <ArrowLeft size={22} aria-hidden />
+        </button>
+        <div className="flex-1">
+          <ProgressBar current={index + 1} total={STEP_COUNT} />
+        </div>
+        <span className="shrink-0 text-sm tabular-nums text-fg-muted">
+          {localeDigits(index + 1, locale)} / {localeDigits(STEP_COUNT, locale)}
+        </span>
+      </div>
 
-      <p className="mt-3 text-sm text-fg-muted">
-        {t('stepOf', {
-          current: localeDigits(step, locale),
-          total: localeDigits(STEP_COUNT, locale),
-        })}
-        {' · '}
-        <span className="font-medium text-fg">{stepLabels[step - 1]}</span>
-      </p>
-
-      {prefilledSet.size > 0 && step === 1 && (
-        <p className="mt-3 flex items-start gap-2 rounded-xl bg-accent-soft p-3 text-sm text-accent">
+      {prefilledSet.size > 0 && index === 0 && (
+        <p className="mt-4 flex items-start gap-2 rounded-xl bg-accent-soft p-3 text-sm text-accent">
           <Sparkles size={17} aria-hidden className="mt-0.5 shrink-0" />
           {t('prefilled')}
         </p>
       )}
 
-      <div key={step} className="animate-rise mt-5 space-y-5">
-        {step === 1 && (
-          <>
-            <ChoiceCards
+      <div ref={headingRef} key={step} className="mt-6">
+        {renderStep()}
+      </div>
+
+      {/* Pinned so the way forward is always in reach without scrolling back. */}
+      <div className="safe-bottom sticky bottom-0 z-20 -mx-4 mt-8 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur lg:mx-0 lg:rounded-b-xl">
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={submitting}
+          className="btn btn-primary w-full"
+        >
+          {submitting && <Loader2 size={20} aria-hidden className="animate-spin" />}
+          {submitting ? t('submitting') : isLast ? t('submit') : t('next')}
+          {!submitting && !isLast && <ArrowRight size={20} aria-hidden />}
+        </button>
+
+        {submitError && (
+          <p role="alert" className="mt-2 flex items-start gap-1.5 text-sm font-medium text-danger">
+            <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
+            {submitError}
+          </p>
+        )}
+
+        <p className="mt-1.5 text-center text-xs text-fg-subtle">{t('draftSaved')}</p>
+      </div>
+    </div>
+  )
+
+  function renderStep() {
+    switch (step) {
+      case 'relation':
+        return (
+          <QuestionScreen question={t('qRelation')} help={t('qRelationHelp')}>
+            <OptionList
               id="relation"
-              label={t('relation')}
-              required
+              label=""
               value={data.relation}
               onChange={(v) => set('relation', v)}
               error={errors.relation}
-              columns={3}
               options={[
                 { value: 'self', label: t('relationSelf') },
                 { value: 'father', label: t('relationFather') },
@@ -218,11 +272,15 @@ export function ProfileForm({
                 { value: 'relative', label: t('relationRelative') },
               ]}
             />
+          </QuestionScreen>
+        )
 
-            <ChoiceCards
+      case 'gender':
+        return (
+          <QuestionScreen question={t('qGender')} help={t('qGenderHelp')}>
+            <OptionList
               id="gender"
-              label={t('forWhom')}
-              required
+              label=""
               value={data.gender}
               onChange={(v) => set('gender', v)}
               error={errors.gender}
@@ -231,18 +289,21 @@ export function ProfileForm({
                 { value: 'female', label: t('forDaughter') },
               ]}
             />
+          </QuestionScreen>
+        )
 
+      case 'name':
+        return (
+          <QuestionScreen question={t('qName')} help={t('qNameHelp')}>
             <TextField
               id="fullNameGu"
               label={t('nameGu')}
-              hint={t('nameHelp')}
               required
               value={data.fullNameGu}
               onChange={(v) => set('fullNameGu', v)}
               error={errors.fullNameGu}
               autoComplete="name"
             />
-
             <TextField
               id="fullNameEn"
               label={t('nameEn')}
@@ -250,11 +311,12 @@ export function ProfileForm({
               value={data.fullNameEn}
               onChange={(v) => set('fullNameEn', v)}
             />
-          </>
-        )}
+          </QuestionScreen>
+        )
 
-        {step === 2 && (
-          <>
+      case 'dob':
+        return (
+          <QuestionScreen question={t('qDob')} help={t('qDobHelp')}>
             <TextField
               id="dob"
               type="date"
@@ -269,7 +331,12 @@ export function ProfileForm({
                   : undefined
               }
             />
+          </QuestionScreen>
+        )
 
+      case 'birth':
+        return (
+          <QuestionScreen question={t('qBirth')} help={t('qBirthHelp')}>
             <div>
               <TextField
                 id="birthTime"
@@ -279,7 +346,6 @@ export function ProfileForm({
                 value={data.birthTime}
                 onChange={(v) => set('birthTime', v)}
                 error={errors.birthTime}
-                hint={t('birthTimeHelp')}
               />
               <div className="mt-2">
                 <CheckboxField
@@ -302,7 +368,12 @@ export function ProfileForm({
               value={data.birthPlaceText}
               onChange={(v) => set('birthPlaceText', v)}
             />
+          </QuestionScreen>
+        )
 
+      case 'body':
+        return (
+          <QuestionScreen question={t('qBody')} help={t('qBodyHelp')}>
             <SelectField
               id="heightCm"
               label={t('heightLabel')}
@@ -315,7 +386,6 @@ export function ProfileForm({
                 label: `${formatHeight(cm, locale)} (${localeDigits(cm, locale)} cm)`,
               }))}
             />
-
             <ChipChoice
               id="maritalStatus"
               label={t('maritalLabel')}
@@ -327,49 +397,48 @@ export function ProfileForm({
                 { value: 'widowed', label: tc('widowed') },
               ]}
             />
-          </>
-        )}
+          </QuestionScreen>
+        )
 
-        {step === 3 && (
-          <>
-            <ChipChoice
+      case 'subCommunity':
+        return (
+          <QuestionScreen question={t('qSubCommunity')} help={t('qSubCommunityHelp')}>
+            <OptionList
               id="subCommunity"
-              label={t('subCommunityLabel')}
-              required
+              label=""
               value={data.subCommunity}
               onChange={(v) => set('subCommunity', v)}
               error={errors.subCommunity}
               options={taxonomies.subCommunity}
             />
+          </QuestionScreen>
+        )
 
-            <ChipChoice
+      case 'sect':
+        return (
+          <QuestionScreen question={t('qSect')} help={t('qSectHelp')}>
+            <OptionList
               id="sect"
-              label={t('sectLabel')}
-              required
+              label=""
               value={data.sect}
               onChange={(v) => set('sect', v)}
               error={errors.sect}
               options={taxonomies.sect}
             />
+          </QuestionScreen>
+        )
 
-            <ChipChoice
-              id="diet"
-              label={t('dietLabel')}
-              value={data.diet}
-              onChange={(v) => set('diet', v)}
-              options={taxonomies.diet}
-            />
-
-            <SelectField
+      case 'education':
+        return (
+          <QuestionScreen question={t('qEducation')} help={t('qEducationHelp')}>
+            <OptionList
               id="educationLevel"
-              label={t('educationLevelLabel')}
-              required
+              label=""
               value={data.educationLevel}
               onChange={(v) => set('educationLevel', v)}
               error={errors.educationLevel}
               options={taxonomies.educationLevel}
             />
-
             <TextField
               id="educationDetail"
               label={t('educationDetailLabel')}
@@ -378,26 +447,42 @@ export function ProfileForm({
               value={data.educationDetail}
               onChange={(v) => set('educationDetail', v)}
             />
+          </QuestionScreen>
+        )
 
-            <ChipChoice
+      case 'occupation':
+        return (
+          <QuestionScreen question={t('qOccupation')} help={t('qOccupationHelp')}>
+            <OptionList
               id="occupationType"
-              label={t('occupationTypeLabel')}
-              required
+              label=""
               value={data.occupationType}
               onChange={(v) => set('occupationType', v)}
               error={errors.occupationType}
               options={taxonomies.occupationType}
             />
-
             <TextAreaField
               id="occupationDetail"
               label={t('occupationDetailLabel')}
               placeholder={t('occupationDetailPlaceholder')}
               optionalLabel={t('optional')}
+              rows={2}
               value={data.occupationDetail}
               onChange={(v) => set('occupationDetail', v)}
             />
+            <TextField
+              id="employer"
+              label={t('employerLabel')}
+              optionalLabel={t('optional')}
+              value={data.employer}
+              onChange={(v) => set('employer', v)}
+            />
+          </QuestionScreen>
+        )
 
+      case 'place':
+        return (
+          <QuestionScreen question={t('qPlace')}>
             <TextField
               id="city"
               label={t('cityLabel')}
@@ -407,11 +492,19 @@ export function ProfileForm({
               error={errors.city}
               autoComplete="address-level2"
             />
-          </>
-        )}
+            <ChipChoice
+              id="diet"
+              label={t('dietLabel')}
+              value={data.diet}
+              onChange={(v) => set('diet', v)}
+              options={taxonomies.diet}
+            />
+          </QuestionScreen>
+        )
 
-        {step === 4 && (
-          <>
+      case 'parents':
+        return (
+          <QuestionScreen question={t('qParents')}>
             <TextField
               id="fatherName"
               label={t('fatherNameLabel')}
@@ -428,17 +521,28 @@ export function ProfileForm({
               onChange={(v) => set('motherName', v)}
               error={errors.motherName}
             />
-            {/* Required, and the reason why is stated inline — families will
-                otherwise skip it as trivia. */}
+          </QuestionScreen>
+        )
+
+      // Its own screen on purpose: a shared mosal disqualifies a match
+      // outright, and families skip it as trivia when it sits in a stack.
+      case 'mosal':
+        return (
+          <QuestionScreen question={t('qMosal')} help={t('mosalHelp')}>
             <TextField
               id="mosalName"
               label={t('mosalLabel')}
-              hint={t('mosalHelp')}
               required
               value={data.mosalName}
               onChange={(v) => set('mosalName', v)}
               error={errors.mosalName}
             />
+          </QuestionScreen>
+        )
+
+      case 'familyExtra':
+        return (
+          <QuestionScreen question={t('qFamilyExtra')} help={t('qFamilyExtraHelp')}>
             <TextField
               id="nativePlace"
               label={t('nativePlaceLabel')}
@@ -450,7 +554,6 @@ export function ProfileForm({
               <SelectField
                 id="brothersCount"
                 label={t('brothersLabel')}
-                optionalLabel={t('optional')}
                 value={data.brothersCount}
                 onChange={(v) => set('brothersCount', v)}
                 options={[0, 1, 2, 3, 4, 5].map((n) => ({
@@ -461,7 +564,6 @@ export function ProfileForm({
               <SelectField
                 id="sistersCount"
                 label={t('sistersLabel')}
-                optionalLabel={t('optional')}
                 value={data.sistersCount}
                 onChange={(v) => set('sistersCount', v)}
                 options={[0, 1, 2, 3, 4, 5].map((n) => ({
@@ -470,11 +572,12 @@ export function ProfileForm({
                 }))}
               />
             </div>
-          </>
-        )}
+          </QuestionScreen>
+        )
 
-        {step === 5 && (
-          <>
+      case 'astro':
+        return (
+          <QuestionScreen question={t('qAstro')}>
             <p className="flex items-start gap-2 rounded-xl bg-primary-soft p-3 text-sm text-primary">
               <Info size={17} aria-hidden className="mt-0.5 shrink-0" />
               {t('astroHelp')}
@@ -515,7 +618,12 @@ export function ProfileForm({
                 { value: 'high', label: locale === 'gu' ? 'મંગળ' : 'Manglik' },
               ]}
             />
+          </QuestionScreen>
+        )
 
+      case 'contact':
+        return (
+          <QuestionScreen question={t('qContact')} help={t('qContactHelp')}>
             <PhoneList
               phones={data.phones}
               onChange={(p) => set('phones', p)}
@@ -530,7 +638,6 @@ export function ProfileForm({
                 self: t('phoneKindSelf'),
               }}
             />
-
             <TextAreaField
               id="address"
               label={t('addressLabel')}
@@ -539,21 +646,19 @@ export function ProfileForm({
               value={data.address}
               onChange={(v) => set('address', v)}
             />
-          </>
-        )}
+          </QuestionScreen>
+        )
 
-        {step === 6 && (
-          <>
-            <h2 className="text-xl font-bold">{t('reviewTitle')}</h2>
-            <p className="-mt-3 text-sm text-fg-muted">{t('reviewHelp')}</p>
-
-            <ReviewGroup title={stepLabels[0]} onEdit={() => setStep(1)} editLabel={t('edit')}
+      case 'review':
+        return (
+          <QuestionScreen question={t('reviewTitle')} help={t('reviewHelp')}>
+            <ReviewGroup title={t('step1')} onEdit={() => setStep('name')} editLabel={t('edit')}
               rows={[
                 [tp('name'), data.fullNameGu || data.fullNameEn],
                 [t('forWhom'), data.gender === 'male' ? t('forSon') : data.gender === 'female' ? t('forDaughter') : ''],
               ]}
             />
-            <ReviewGroup title={stepLabels[1]} onEdit={() => setStep(2)} editLabel={t('edit')}
+            <ReviewGroup title={t('step2')} onEdit={() => setStep('dob')} editLabel={t('edit')}
               rows={[
                 [tp('dob'), data.dob && localeDigits(data.dob.split('-').reverse().join('/'), locale)],
                 [tp('birthTime'), data.birthTimeUnknown ? t('dontKnow') : localeDigits(data.birthTime, locale)],
@@ -561,7 +666,7 @@ export function ProfileForm({
                 [tp('height'), data.heightCm ? formatHeight(Number(data.heightCm), locale) : ''],
               ]}
             />
-            <ReviewGroup title={stepLabels[2]} onEdit={() => setStep(3)} editLabel={t('edit')}
+            <ReviewGroup title={t('step3')} onEdit={() => setStep('subCommunity')} editLabel={t('edit')}
               rows={[
                 [t('subCommunityLabel'), labelOf(taxonomies.subCommunity, data.subCommunity)],
                 [t('sectLabel'), labelOf(taxonomies.sect, data.sect)],
@@ -570,7 +675,7 @@ export function ProfileForm({
                 [t('cityLabel'), data.city],
               ]}
             />
-            <ReviewGroup title={stepLabels[3]} onEdit={() => setStep(4)} editLabel={t('edit')}
+            <ReviewGroup title={t('step4')} onEdit={() => setStep('parents')} editLabel={t('edit')}
               rows={[
                 [tp('fatherName'), data.fatherName],
                 [tp('motherName'), data.motherName],
@@ -578,7 +683,7 @@ export function ProfileForm({
               ]}
               emphasise={tp('mosal')}
             />
-            <ReviewGroup title={stepLabels[4]} onEdit={() => setStep(5)} editLabel={t('edit')}
+            <ReviewGroup title={t('step5')} onEdit={() => setStep('astro')} editLabel={t('edit')}
               rows={[
                 [tp('rashi'), data.rashi ? (locale === 'gu' ? RASHIS.find((r) => r[0] === data.rashi)?.[1] : RASHIS.find((r) => r[0] === data.rashi)?.[2]) ?? '' : ''],
                 [tp('contact'), data.phones.filter((p) => p.value).map((p) => p.value).join(', ')],
@@ -604,82 +709,14 @@ export function ProfileForm({
                 </p>
               )}
             </div>
-          </>
-        )}
-      </div>
-
-      {/* Pinned so the way forward is always in reach without scrolling back. */}
-      <div className="safe-bottom sticky bottom-0 z-20 -mx-4 mt-8 border-t border-border bg-bg/95 px-4 py-3 backdrop-blur lg:mx-0 lg:rounded-b-xl">
-        <div className="flex gap-3">
-          {step > 1 && (
-            <button type="button" onClick={goBack} className="btn btn-secondary !px-4" aria-label={t('back')}>
-              <ArrowLeft size={20} aria-hidden />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={submitting}
-            className="btn btn-primary flex-1"
-          >
-            {submitting && <Loader2 size={20} aria-hidden className="animate-spin" />}
-            {submitting ? t('submitting') : step === STEP_COUNT ? t('submit') : t('next')}
-            {!submitting && step < STEP_COUNT && <ArrowRight size={20} aria-hidden />}
-          </button>
-        </div>
-
-        {submitError && (
-          <p role="alert" className="mt-2 flex items-start gap-1.5 text-sm font-medium text-danger">
-            <TriangleAlert size={15} aria-hidden className="mt-1 shrink-0" />
-            {submitError}
-          </p>
-        )}
-
-        <p className="mt-1.5 text-center text-xs text-fg-subtle">{t('draftSaved')}</p>
-      </div>
-    </div>
-  )
+          </QuestionScreen>
+        )
+    }
+  }
 }
 
 function labelOf(options: TaxonomyOption[], value: string): string {
   return options.find((o) => o.value === value)?.label ?? ''
-}
-
-function Stepper({
-  current,
-  labels,
-  onJump,
-}: {
-  current: number
-  labels: string[]
-  onJump: (step: number) => void
-}) {
-  return (
-    <ol className="flex gap-1.5" aria-label={labels[current - 1]}>
-      {labels.map((label, i) => {
-        const n = i + 1
-        const state = n < current ? 'done' : n === current ? 'current' : 'todo'
-        return (
-          <li key={label} className="flex-1">
-            <button
-              type="button"
-              onClick={() => onJump(n)}
-              disabled={state === 'todo'}
-              aria-current={state === 'current' ? 'step' : undefined}
-              aria-label={label}
-              className={cn(
-                'flex h-1.5 w-full rounded-full transition-colors duration-200',
-                state === 'done' && 'bg-primary',
-                state === 'current' && 'bg-primary',
-                state === 'todo' && 'bg-border',
-                state === 'done' && 'cursor-pointer',
-              )}
-            />
-          </li>
-        )
-      })}
-    </ol>
-  )
 }
 
 function ReviewGroup({

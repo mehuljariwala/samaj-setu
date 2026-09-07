@@ -52,7 +52,18 @@ function LanguageToggle() {
             l === locale ? 'bg-primary text-on-primary' : 'text-fg-muted',
           )}
         >
-          {l === 'gu' ? 'ગુજરાતી' : 'EN'}
+          {/* Abbreviated on a phone: the full word plus the account button
+              squeezed the page title down to an ellipsis at 390px. Still
+              Gujarati script, so it stays identifiable to someone who cannot
+              read the Latin alternative. */}
+          {l === 'gu' ? (
+            <>
+              <span className="sm:hidden">ગુ</span>
+              <span className="hidden sm:inline">ગુજરાતી</span>
+            </>
+          ) : (
+            'EN'
+          )}
         </button>
       ))}
     </div>

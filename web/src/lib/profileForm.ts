@@ -78,29 +78,39 @@ export const EMPTY_FORM: ProfileFormData = {
   candidateConfirmed: false,
 }
 
-export const STEP_COUNT = 6
+/**
+ * One question per screen.
+ *
+ * This used to be six screens of eight-or-nine stacked fields, which is where
+ * the form lost people: a parent on a phone saw a wall of inputs and closed
+ * it. The fields and the validation rules below are unchanged — only how many
+ * of them a family is asked to hold in their head at once.
+ *
+ * `mosal` gets a screen to itself deliberately. A shared mosal disqualifies a
+ * match outright, so it is not a field to bury between "mother's name" and
+ * "native place".
+ */
+export type StepId =
+  | 'relation' | 'gender' | 'name' | 'dob' | 'birth' | 'body'
+  | 'subCommunity' | 'sect' | 'education' | 'occupation' | 'place'
+  | 'parents' | 'mosal' | 'familyExtra' | 'astro' | 'contact' | 'review'
 
-/** Fields owned by each step, so the review screen can jump to the right one. */
-export const STEP_FIELDS: Record<number, Array<keyof ProfileFormData>> = {
-  1: ['relation', 'gender', 'fullNameGu', 'fullNameEn'],
-  2: ['dob', 'birthTime', 'birthTimeUnknown', 'birthPlaceText', 'heightCm', 'maritalStatus'],
-  3: ['subCommunity', 'sect', 'diet', 'educationLevel', 'educationDetail',
-      'occupationType', 'occupationDetail', 'employer', 'city'],
-  4: ['fatherName', 'motherName', 'mosalName', 'nativePlace', 'brothersCount', 'sistersCount'],
-  5: ['rashi', 'gan', 'mangal', 'phones', 'address'],
-  6: ['consentListing', 'candidateConfirmed'],
-}
+export const STEPS: readonly StepId[] = [
+  'relation', 'gender', 'name', 'dob', 'birth', 'body',
+  'subCommunity', 'sect', 'education', 'occupation', 'place',
+  'parents', 'mosal', 'familyExtra', 'astro', 'contact', 'review',
+] as const
+
+export const STEP_COUNT = STEPS.length
 
 export type FormErrors = Partial<Record<keyof ProfileFormData, string>>
 
 /**
- * Per-step validation. Deliberately lean: this audience abandons a form that
+ * Per-screen validation. Deliberately lean: this audience abandons a form that
  * nags. Only fields that make a profile unusable — or unmatched — are required.
- * Mosal is required because a shared mosal disqualifies a match outright, and
- * discovering that three phone calls later wastes both families' time.
  */
 export function validateStep(
-  step: number,
+  step: StepId,
   d: ProfileFormData,
   msg: { required: string; consent: string },
 ): FormErrors {
@@ -109,53 +119,77 @@ export function validateStep(
     if (!String(d[k] ?? '').trim()) e[k] = msg.required
   }
 
-  if (step === 1) {
-    need('relation')
-    need('gender')
-    if (!d.fullNameGu.trim() && !d.fullNameEn.trim()) {
-      e.fullNameGu = msg.required
-    }
-  }
+  switch (step) {
+    case 'relation':
+      need('relation')
+      break
 
-  if (step === 2) {
-    need('dob')
-    need('heightCm')
-    // Birth time is either given or explicitly waived — a silently blank one
-    // produces a confidently wrong kundali later.
-    if (!d.birthTimeUnknown && !d.birthTime) e.birthTime = msg.required
-  }
+    case 'gender':
+      need('gender')
+      break
 
-  if (step === 3) {
-    need('subCommunity')
-    need('sect')
-    need('educationLevel')
-    need('occupationType')
-    need('city')
-  }
+    case 'name':
+      if (!d.fullNameGu.trim() && !d.fullNameEn.trim()) e.fullNameGu = msg.required
+      break
 
-  if (step === 4) {
-    need('fatherName')
-    need('motherName')
-    need('mosalName')
-  }
+    case 'dob':
+      need('dob')
+      break
 
-  if (step === 5) {
-    if (!d.phones.some((p) => p.value.trim())) {
-      e.phones = msg.required
-    }
-  }
+    case 'birth':
+      // Birth time is either given or explicitly waived — a silently blank one
+      // produces a confidently wrong kundali later.
+      if (!d.birthTimeUnknown && !d.birthTime) e.birthTime = msg.required
+      break
 
-  if (step === 6) {
-    if (!d.consentListing || !d.candidateConfirmed) {
-      e.consentListing = msg.consent
-    }
+    case 'body':
+      need('heightCm')
+      break
+
+    case 'subCommunity':
+      need('subCommunity')
+      break
+
+    case 'sect':
+      need('sect')
+      break
+
+    case 'education':
+      need('educationLevel')
+      break
+
+    case 'occupation':
+      need('occupationType')
+      break
+
+    case 'place':
+      need('city')
+      break
+
+    case 'parents':
+      need('fatherName')
+      need('motherName')
+      break
+
+    case 'mosal':
+      need('mosalName')
+      break
+
+    case 'contact':
+      if (!d.phones.some((p) => p.value.trim())) e.phones = msg.required
+      break
+
+    case 'review':
+      if (!d.consentListing || !d.candidateConfirmed) e.consentListing = msg.consent
+      break
+
+    // Everything on these screens is optional.
+    case 'familyExtra':
+    case 'astro':
+      break
   }
 
   return e
-}
-
-export function isStepValid(step: number, d: ProfileFormData): boolean {
-  return Object.keys(validateStep(step, d, { required: 'x', consent: 'x' })).length === 0
 }
 
 export function computedAge(dob: string): number | null {
@@ -203,10 +237,13 @@ export function prefilledKeys(p: ParsedBiodata): Set<keyof ProfileFormData> {
   return keys
 }
 
-const DRAFT_KEY = 'samaj-setu:profile-draft'
+// v2: drafts used to store a numeric index into a six-step flow. Restoring one
+// into the screen list above would drop a family on an unrelated question, so
+// the old key is abandoned rather than migrated.
+const DRAFT_KEY = 'samaj-setu:profile-draft-v2'
 
 /** Long form on a phone: an accidental back-swipe must not cost 20 answers. */
-export function saveDraft(d: ProfileFormData, step: number) {
+export function saveDraft(d: ProfileFormData, step: StepId) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify({ d, step, at: Date.now() }))
   } catch {
@@ -214,14 +251,16 @@ export function saveDraft(d: ProfileFormData, step: number) {
   }
 }
 
-export function loadDraft(): { d: ProfileFormData; step: number } | null {
+export function loadDraft(): { d: ProfileFormData; step: StepId } | null {
   try {
     const raw = localStorage.getItem(DRAFT_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as { d: ProfileFormData; step: number; at: number }
+    const parsed = JSON.parse(raw) as { d: ProfileFormData; step: StepId; at: number }
     // A month-old draft is noise, not a rescue.
     if (Date.now() - parsed.at > 30 * 24 * 60 * 60 * 1000) return null
-    return { d: { ...EMPTY_FORM, ...parsed.d }, step: parsed.step }
+    // Guard against a renamed screen in a future release.
+    const step = STEPS.includes(parsed.step) ? parsed.step : STEPS[0]
+    return { d: { ...EMPTY_FORM, ...parsed.d }, step }
   } catch {
     return null
   }
