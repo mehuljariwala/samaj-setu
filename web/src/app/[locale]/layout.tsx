@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { BottomNav } from '@/components/BottomNav'
+import { DemoBanner } from '@/components/DemoBanner'
 import { Footer } from '@/components/Footer'
 import { SideNav } from '@/components/SideNav'
 import { routing } from '@/i18n/routing'
@@ -87,6 +88,7 @@ export default async function LocaleLayout({
           <div className="lg:flex">
             <SideNav />
             <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
+              <DemoBanner />
               <div className="flex-1">{children}</div>
               <Footer />
             </div>

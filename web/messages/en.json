@@ -2,7 +2,9 @@
   "app": {
     "name": "Samaj Setu",
     "tagline": "Khatri Kshatriya Samaj — Surti · Khambhati · Ahmedabadi · Indori",
-    "free": "Completely free"
+    "free": "Completely free",
+    "demoTitle": "Preview",
+    "demoBody": "This is a preview for samaj feedback. The profiles shown are samples, nothing you enter is saved, and phone login isn't switched on yet."
   },
   "nav": {
     "home": "Home",
